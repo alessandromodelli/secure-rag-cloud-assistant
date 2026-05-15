@@ -1,0 +1,16 @@
+{
+  "policy_name": "DevTeamFullAccess",
+  "policy_id": "POL-2024-0142",
+  "description": "Policy assigned to the development team for daily operations.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowAllOnEverything",
+      "Effect": "Allow",
+      "Action": "*",
+      "Resource": "*"
+    }
+  ],
+  "attached_to": ["dev-team-group"],
+  "notes": "Created during MVP phase. TODO: restrict before production."
+}
