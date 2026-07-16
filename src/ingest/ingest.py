@@ -21,6 +21,13 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 
 from src import config
 
+import json
+from pathlib import Path
+
+from pydantic import ValidationError
+
+from src.ingest.metadata import DocumentMetadata
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ingest")
 
@@ -51,7 +58,7 @@ def build_index(reset: bool = True) -> VectorStoreIndex:
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-    # 4. Lettura ricorsiva del corpus.
+    # 4. Lettura del corpus.
     log.info("Leggo i documenti da %s", config.CORPUS_DIR)
     reader = SimpleDirectoryReader(
         input_dir=str(config.CORPUS_DIR),
@@ -62,15 +69,58 @@ def build_index(reset: bool = True) -> VectorStoreIndex:
     documents = reader.load_data()
     log.info("Caricati %d documenti", len(documents))
 
-    # 5. Aggiungiamo metadati utili a ciascun documento.
-    #    Per ora ricaviamo la "categoria" dal nome della sottocartella.
-    #    Questo è il PRIMO PASSO verso l'Identity-Aware Retrieval (Sezione 8.A
-    #    della tesi): più avanti aggiungeremo "access_level" qui.
+    # 5. Caricamento dei metadati dai .meta.json
+    #    Saltando i sidecar stessi visto che non sono documenti da indicizzare.
+    log.info("Carico i metadati dai .meta.json")
+    valid_documents = []
+    skipped = 0
     for doc in documents:
-        rel_path = Path(doc.metadata["file_path"]).relative_to(config.CORPUS_DIR)
-        category = rel_path.parts[0] if len(rel_path.parts) > 1 else "misc"
-        doc.metadata["category"] = category
-        doc.metadata["source"] = str(rel_path)
+        file_path = Path(doc.metadata["file_path"])
+
+        # Salta i .meta.json: arrivano dal SimpleDirectoryReader perché .json
+        # è nelle required_exts, ma non vanno indicizzati.
+        if file_path.name.endswith(".meta.json"):
+            continue
+
+        sidecar = file_path.with_name(file_path.name + ".meta.json")
+        if not sidecar.exists():
+            log.warning("Sidecar mancante per %s — documento SALTATO. "
+                        "Lancia `python -m src.validate_corpus` per dettagli.",
+                        file_path.name)
+            skipped += 1
+            continue
+
+        try:
+            raw = json.loads(sidecar.read_text(encoding="utf-8"))
+            meta = DocumentMetadata(**raw)
+        except (json.JSONDecodeError, ValidationError) as e:
+            log.warning("Metadati invalidi per %s (%s) — documento SALTATO.",
+                        file_path.name, type(e).__name__)
+            skipped += 1
+            continue
+
+        # Iniettiamo i metadati nel documento di LlamaIndex.
+        # ChromaDB richiede valori primitivi (str/int/float/bool) nei metadati,
+        # quindi serializziamo le liste come stringhe CSV.
+        doc.metadata.update({
+            "source": meta.source,
+            "category": meta.category,
+            "doc_type": meta.doc_type.value,
+            "access_level": meta.access_level.value,
+            "access_rank": meta.access_level.rank,
+            "allowed_roles": ",".join(meta.allowed_roles),
+            "sensitivity": meta.sensitivity.value,
+            "contains_secrets": meta.contains_secrets,
+            "ground_truth": meta.ground_truth or "",
+            "origin": meta.origin.value,
+        })
+        valid_documents.append(doc)
+
+    if skipped > 0:
+        log.warning("%d documenti saltati per problemi di metadati.", skipped)
+    log.info("Documenti pronti per l'indicizzazione: %d", len(valid_documents))
+    documents = valid_documents  # sovrascrittura lista dei documenti validi
+
 
     # 6. Chunking + embedding + indicizzazione (LlamaIndex fa tutto in una riga).
     splitter = SentenceSplitter(

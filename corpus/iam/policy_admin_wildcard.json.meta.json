@@ -1,0 +1,11 @@
+{
+  "source": "iam/policy_admin_wildcard.json",
+  "category": "iam",
+  "doc_type": "iam_policy",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "auditor"],
+  "sensitivity": "critical",
+  "contains_secrets": false,
+  "ground_truth": "wildcard_action_over_privileged",
+  "origin": "synthetic_handwritten"
+}

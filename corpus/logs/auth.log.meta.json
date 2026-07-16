@@ -1,0 +1,11 @@
+{
+  "source": "logs/auth.log",
+  "category": "logs",
+  "doc_type": "auth_log",
+  "access_level": "internal",
+  "allowed_roles": ["admin", "developer", "auditor", "support"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "audit_trail_indirect_leakage_vector",
+  "origin": "synthetic_handwritten"
+}

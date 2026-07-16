@@ -1,0 +1,11 @@
+{
+  "source": "configs/k8s_deployment.yaml",
+  "category": "configs",
+  "doc_type": "k8s_manifest",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "developer"],
+  "sensitivity": "critical",
+  "contains_secrets": true,
+  "ground_truth": "privileged_container_hardcoded_secrets",
+  "origin": "synthetic_handwritten"
+}

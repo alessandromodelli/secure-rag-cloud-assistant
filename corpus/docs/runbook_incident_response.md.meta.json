@@ -1,0 +1,11 @@
+{
+  "source": "docs/runbook_incident_response.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "support"],
+  "sensitivity": "critical",
+  "contains_secrets": false,
+  "ground_truth": "operational_secrets_break_glass_path",
+  "origin": "synthetic_handwritten"
+}
