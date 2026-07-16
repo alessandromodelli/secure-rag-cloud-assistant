@@ -19,6 +19,10 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from pydantic import BaseModel, Field
 
 from src import config
+from src.IAR.identity import DEFAULT_USER, UserIdentity, ROLE_TO_ACCESS_LEVEL
+from src.RAG.secure_rag import answer as secure_answer
+
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("api")
@@ -93,6 +97,12 @@ class SourceInfo(BaseModel):
     category: str
     score: Optional[float]
     text_preview: str
+    access_level: Optional[str] = None
+    allowed_roles: Optional[str] = None
+    contains_secrets: Optional[bool] = None
+    score: Optional[float]
+
+
 
 
 class QueryResponse(BaseModel):
@@ -100,6 +110,25 @@ class QueryResponse(BaseModel):
     answer: str
     sources: list[SourceInfo]
     user_role: Optional[str] = None
+
+
+class AuditEntry(BaseModel):
+    source: str
+    access_level: str
+    allowed_roles: str
+    contains_secrets: bool
+    score: Optional[float]
+    authorized: bool
+    reason: Optional[str] = None
+
+
+class SecureQueryResponse(BaseModel):
+    query: str
+    identity: dict
+    answer: str
+    authorized_sources: list[SourceInfo]
+    audit_log: list[AuditEntry]
+    stats: dict
 
 
 # Endpoint
@@ -142,6 +171,9 @@ def query_endpoint(req: QueryRequest) -> QueryResponse:
             category=node.metadata.get("category", "unknown"),
             score=float(node.score) if node.score is not None else None,
             text_preview=node.text[:200],
+            access_level=node.metadata.get("access_level", None),
+            allowed_roles=node.metadata.get("allowed_roles", None).split(","),
+            contains_secrets=node.metadata.get("contains_secrets", None),
         )
         for node in response.source_nodes
     ]
@@ -152,3 +184,28 @@ def query_endpoint(req: QueryRequest) -> QueryResponse:
         sources=sources,
         user_role=req.user_role,
     )
+
+
+
+@app.post("/secure-query", response_model=SecureQueryResponse)
+def secure_query_endpoint(req: QueryRequest) -> SecureQueryResponse:
+    """ Esegue una query con Identity Aware Retrieval. Se il ruolo dell'utente non è specificato, viene usato il default (public)."""
+
+    if "index" not in state: 
+        raise HTTPException(status_code=503, detail="Index not loaded")
+    
+    role = (req.user_role or "public").strip().lower()
+    if role not in ROLE_TO_ACCESS_LEVEL:
+        raise HTTPException(status_code=400, detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}")
+    
+    identity = UserIdentity(user_id=f"user_{role}", role=role)
+
+    top_k = req.top_k or config.SIMILARITY_TOP_K
+    log.info("Query sicura (top_k=%d, user_role=%s): %s", top_k, role, req.query)
+
+    result = secure_answer(query=req.query, identity=identity, top_k=top_k)
+
+    return SecureQueryResponse(**result)
+
+
+
