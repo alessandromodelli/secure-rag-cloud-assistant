@@ -46,7 +46,7 @@ class AuthorizationDecision:
     is_authorized: bool
     reason: Optional[str] = None # Motivo per cui l'accesso è negato, se applicabile
 
-def authorize_chunk(chunk_metadata: dict, user: UserIdentity, chunk_score: Optional[float]) -> AuthorizationDecision:
+def authorize_chunk(chunk_metadata: dict, user: UserIdentity, chunk_score: Optional[float] = None) -> AuthorizationDecision:
     """ Determina se un chunk di documento risulta accessibile per un utente sulla base dei metadati del chunk e dell'identità dell'utente.
     
     Applica le regole del predicato di autorizzazione basato su access_level e allowed_roles.

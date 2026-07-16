@@ -65,7 +65,7 @@ class IdentityAwareRetriever:
             metadata = chunk.metadata or {}
 
             chunk_score = float(chunk.score) if chunk.score is not None else None
-            decision = authorize_chunk(metadata, identity, chunk_score)
+            decision = authorize_chunk(metadata, identity)
             
             audit_log.append(RetrievalRecord(
                 source=metadata.get("source", "unknown"),
@@ -76,7 +76,7 @@ class IdentityAwareRetriever:
                 text_preview=chunk.text[:200],
                 decision=decision
             ))
-            if decision.is_authorized and chunk_score is not None and chunk_score > 0.6:
+            if decision.is_authorized:
                 authorized_chunks.append(chunk)
 
         return RetrievalResult(

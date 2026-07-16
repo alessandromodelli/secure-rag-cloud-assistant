@@ -2,7 +2,7 @@
   "source": "configs/k8s_deployment.yaml",
   "category": "configs",
   "doc_type": "k8s_manifest",
-  "access_level": "confidential",
+  "access_level": "internal",
   "allowed_roles": ["admin", "developer"],
   "sensitivity": "critical",
   "contains_secrets": true,
