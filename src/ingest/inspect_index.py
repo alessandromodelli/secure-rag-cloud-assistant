@@ -31,6 +31,11 @@ def main() -> None:
         print(f"  ground_truth     : {meta.get('ground_truth')}")
         print(f"  origin           : {meta.get('origin')}")
         print(f"  text (200 char)  : {text[:200]!r}")
+        print(f"  role_developer           : {meta.get('role_developer')}")
+        print(f"  role_admin           : {meta.get('role_admin')}")
+        print(f"  role_auditor          : {meta.get('role_auditor')}")
+        print(f"  role_support           : {meta.get('role_support')}")
+        print(f"  role_public           : {meta.get('role_public')}")
         print()
 
 

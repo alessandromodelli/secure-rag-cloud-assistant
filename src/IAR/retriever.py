@@ -1,10 +1,12 @@
 """
 Identity-Aware Retriever.
 
+Il predicato di autorizzazione è tradotto in un filtro sui metadati applicato dal db vettoriale prima del retrieval semantico. In questo modo l'utente riceve solo chunk di documenti per cui possiede l'autorizzazione.
+
 Funzionamento :
-    1. Esegue il retrieval standard sul vector store (top-k semantico, non filtrato).
-    2. Applica il filtro di autorizzazione a ciascun chunk (dopo il recupero).
-    3. Ritorna sia la lista filtrata (per l'LLM) sia quella raw (per misurazione).
+    1. Applica il filtro sui metadati del db vettoriale prima del recupero.
+    2. Esegue il retrieval standard sul vector store (top-k semantico sui documenti autorizzati).
+    3. Ritorna i risultati
 """
 
 from dataclasses import dataclass, field
@@ -13,7 +15,12 @@ from typing import Optional
 from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import NodeWithScore
 
-from src.IAR.identity import UserIdentity, AuthorizationDecision, authorize_chunk
+from src.IAR.identity import UserIdentity, authorize_chunk, authorization_filter
+
+class AuthorizationError(RuntimeError):
+    """ Eccezione lanciata se il vector store restituisce un chunk che non è autorizzato.
+    
+    Scatta solo se il filtro non è stato applicato correttamente. Caso d'uso non previsto."""
 
 @dataclass
 class RetrievalRecord:
@@ -24,65 +31,74 @@ class RetrievalRecord:
     contains_secrets: bool
     score: Optional[float]
     text_preview: str
-    decision: AuthorizationDecision
 
 @dataclass
 class RetrievalResult:
     """ Risultato del retrieval basato su identità"""
     identity: UserIdentity
-    raw_chunks: list[NodeWithScore] # Tutti i top-k chunks recuperati dal db vettoriale
-    authorized_chunks: list[NodeWithScore] # Solo i chunk che superano l'autorizzazione
-    audit_log: list[RetrievalRecord] = field(default_factory=list) # Log di autorizzazione per ciascun chunk
+    chunks: list[NodeWithScore] # Tutti i top-k chunks recuperati dal db vettoriale
+    audit_log: list[RetrievalRecord] = field(default_factory=list) 
 
     @property
-    def blocked_count(self) -> int:
-        """ Numero di chunk bloccati che non hanno superato l'autorizzazione"""
-        return len(self.raw_chunks) - len(self.authorized_chunks)
+    def retrieved_count(self) -> int:
+        """ Numero di chunk recuperati"""
+        return len(self.chunks)
     
     @property
-    def blocked_count_with_secrets(self) -> int:
-        """ Numero di chunk bloccati che contengono segreti"""
-        return sum(1 for record in self.audit_log if not record.decision.is_authorized and record.contains_secrets)
+    def chunks_with_secrets(self) -> int:
+        """ Numero di chunk recuperati che contengono segreti"""
+        return sum(1 for record in self.audit_log if record.contains_secrets)
     
 
 class IdentityAwareRetriever:
-    """ Retriever che applica il filtro di autorizzazione in base all'identità dell'utente che effettua la richiesta"""
+    """ Retriever ristretto al sottospazio dei chunk autorizzati per l'identità che effettua la richiesta"""
 
     def __init__(self, index: VectorStoreIndex, top_k: int):
         self._index = index
         self._top_k = top_k
 
     def retrieve(self, query: str, identity: UserIdentity) -> RetrievalResult:
+
+        # Applicazione del filtro 
+        filters = authorization_filter(identity)
+
         # Retrieval sematico standard (top-k)
-        retriever = self._index.as_retriever(similarity_top_k=self._top_k)
-        row_chunks: list[NodeWithScore] = retriever.retrieve(query)
+        retriever = self._index.as_retriever(
+            similarity_top_k=self._top_k, 
+            filters=filters
+        )
+        
+        chunks: list[NodeWithScore] = retriever.retrieve(query)
 
-        # Autorizzazione chunk per chunk
-        authorized_chunks: list[NodeWithScore] = []
-        audit_log: list[RetrievalRecord] = []
+        # Verifica se il filtro è stato applicato correttamente
+        violations = [
+            (chunk.metadata or {}).get("source")
+            for chunk in chunks if not authorize_chunk(chunk.metadata or {}, identity).is_authorized
+        ]
 
-        for chunk in row_chunks: 
-            metadata = chunk.metadata or {}
-
-            chunk_score = float(chunk.score) if chunk.score is not None else None
-            decision = authorize_chunk(metadata, identity)
-            
-            audit_log.append(RetrievalRecord(
-                source=metadata.get("source", "unknown"),
-                access_level=metadata.get("access_level", ""),
-                allowed_roles=metadata.get("allowed_roles", ""),
-                contains_secrets=metadata.get("contains_secrets", False),
-                score=chunk_score,
+        # Non dovrebbe mai essere lanciata
+        if violations:
+            raise AuthorizationError(
+                f"Il vector store ha restituito {len(violations)} chunk non "
+                f"autorizzati per il ruolo '{identity.role}': {violations}. "
+                f"Il filtro pre-retrieval non è stato applicato correttamente."
+            )
+        
+        audit_log = [
+            RetrievalRecord(
+                source=(chunk.metadata).get("source", "unknown"),
+                access_level=(chunk.metadata or {}).get("access_level", ""),
+                allowed_roles=(chunk.metadata or {}).get("allowed_roles", ""),
+                contains_secrets=bool((chunk.metadata or {}).get("contains_secrets", False)),
+                score=float(chunk.score) if chunk.score is not None else None,
                 text_preview=chunk.text[:200],
-                decision=decision
-            ))
-            if decision.is_authorized:
-                authorized_chunks.append(chunk)
+            )
+            for chunk in chunks
+        ]
 
         return RetrievalResult(
             identity=identity,
-            raw_chunks=row_chunks,
-            authorized_chunks=authorized_chunks,
+            chunks=chunks,
             audit_log=audit_log,
         )
 

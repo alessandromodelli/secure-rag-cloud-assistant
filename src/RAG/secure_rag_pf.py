@@ -1,5 +1,5 @@
 """
-RAG che implementa Identity-Aware Retrieval
+RAG che implementa Identity-Aware Retrieval con filtraggio post recupero
 """
 
 import logging
@@ -15,7 +15,7 @@ import chromadb
 
 from src import config
 from src.IAR.identity import DEFAULT_USER, UserIdentity
-from src.IAR.retriever import IdentityAwareRetriever, RetrievalResult
+from src.IAR.retriever_pf import IdentityAwareRetrieverPostFiltering, RetrievalResult
 
 log = logging.getLogger("secure_rag")
 
@@ -46,14 +46,14 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
     """ Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
 
     index = load_index()
-    retriever = IdentityAwareRetriever(index=index, top_k=top_k)
+    retriever = IdentityAwareRetrieverPostFiltering(index=index, top_k=top_k)
 
     result: RetrievalResult = retriever.retrieve(query, identity)
 
     # Verifica che il contesto recuperato non sia vuoto dopo il filtraggio
     # Il contesto vuoto potrebbe far allucinare il modello, quindi in caso restituiamo una risposta standard,
 
-    if not result.chunks:
+    if not result.authorized_chunks:
         log.warning("Contesto post filtraggio vuoto per query '%s' e identità '%s'. Restituisco risposta standard.", query, identity)
 
         llm_answer = ("Non è stato possibile rispondere alla domanda con le informazioni disponibili con il tuo livello di accesso. ")
@@ -62,7 +62,7 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
         # Se il contesto recuperato non risulta vuoto lo utilizziamo per generare la risposta con l'LLM
 
         synthesizer = get_response_synthesizer()
-        response = synthesizer.synthesize(query, nodes=result.chunks)
+        response = synthesizer.synthesize(query, nodes=result.authorized_chunks)
         llm_answer = str(response)
 
     return {
@@ -83,7 +83,7 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
                 "allowed_roles": node.metadata.get("allowed_roles", None),
                 "contains_secrets": node.metadata.get("contains_secrets", None),
             }
-            for node in result.chunks
+            for node in result.authorized_chunks
         ],
         "audit_log": [
             {
@@ -92,13 +92,16 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
                 "allowed_roles": record.allowed_roles,
                 "contains_secrets": record.contains_secrets,
                 "score": record.score,
+                "authorized": record.decision.is_authorized,
+                "reason": record.decision.reason,
             }
             for record in result.audit_log
         ],
         "stats": {
-            "retrieved": result.retrieved_count,
-            "retrieved_with_secrets": result.chunks_with_secrets,
-            "top_k_requested": top_k,
+            "retrieved": len(result.raw_chunks),
+            "authorized": len(result.authorized_chunks),
+            "blocked": result.blocked_count,
+            "blocked_with_secrets": result.blocked_count_with_secrets,
         },
     }
 

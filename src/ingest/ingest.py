@@ -2,7 +2,7 @@
 Ingest pipeline: legge il corpus, crea embeddings, popola ChromaDB.
 
 Eseguibile con:
-    python -m src.ingest
+    python -m src.ingest.ingest
 """
 import logging
 import shutil
@@ -26,7 +26,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from src.ingest.metadata import DocumentMetadata
+from src.ingest.metadata import DocumentMetadata, KNOWN_ROLES
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ingest")
@@ -99,6 +99,7 @@ def build_index(reset: bool = True) -> VectorStoreIndex:
             skipped += 1
             continue
 
+        """     
         # Iniettiamo i metadati nel documento di LlamaIndex.
         # ChromaDB richiede valori primitivi (str/int/float/bool) nei metadati,
         # quindi serializziamo le liste come stringhe CSV.
@@ -114,7 +115,54 @@ def build_index(reset: bool = True) -> VectorStoreIndex:
             "ground_truth": meta.ground_truth or "",
             "origin": meta.origin.value,
         })
+        valid_documents.append(doc) """
+
+        # Denormalizzazione dei ruoli.
+        # Se allowed_roles è vuoto, significa che tutti i ruoli con un valido access_level sono autorizzati.
+        effective_roles = set(meta.allowed_roles) if meta.allowed_roles else set(KNOWN_ROLES)
+        unknown = effective_roles - set(KNOWN_ROLES)
+        if unknown:
+            log.warning("Ruoli ignoti nell'ACL di %s: %s — documento SALTATO.",
+                        meta.source, sorted(unknown))
+            skipped += 1
+            continue
+        role_flags = {f"role_{r}": int(r in effective_roles) for r in sorted(KNOWN_ROLES)}
+
+        doc.metadata.update({
+            "source": meta.source,
+            "category": meta.category,
+            "doc_type": meta.doc_type.value,
+            "access_level": meta.access_level.value,
+            "access_rank": meta.access_level.rank,
+            "allowed_roles": ",".join(meta.allowed_roles), 
+            "sensitivity": meta.sensitivity.value,
+            "contains_secrets": meta.contains_secrets,
+            "ground_truth": meta.ground_truth or "",
+            "origin": meta.origin.value,
+            **role_flags,
+        })
+
+        # Rimozione dei metadati di controllo dall'embedding e dall'LLM, che non devono essere indicizzati.
+        control_keys = [
+            "file_path",
+            "access_level",
+            "access_rank",
+            "allowed_roles",
+            "sensitivity",
+            "contains_secrets",
+            "ground_truth",
+            "origin",
+            *role_flags,
+        ]
+        doc.excluded_embed_metadata_keys = list(
+            dict.fromkeys([*doc.excluded_embed_metadata_keys, *control_keys])
+        )
+        doc.excluded_llm_metadata_keys = list(
+            dict.fromkeys([*doc.excluded_llm_metadata_keys, *control_keys])
+        )
+
         valid_documents.append(doc)
+
 
     if skipped > 0:
         log.warning("%d documenti saltati per problemi di metadati.", skipped)
