@@ -82,6 +82,7 @@ class SourceInfo(BaseModel):
     score: Optional[float]
     text_preview: str
     access_level: Optional[str] = None
+    access_rank: Optional[int] = None
     allowed_roles: Optional[str] = None
     contains_secrets: Optional[bool] = None
 
@@ -111,6 +112,9 @@ def answer(
     identity: UserIdentity = DEFAULT_USER,
     defense_config: DefenceConfig = CONFIGS["C7"],
     top_k: int = config.SIMILARITY_TOP_K,
+    only_urr: Optional[
+        bool
+    ] = False,  # Settare a True per evitare la generazione LLM non necessaria per la misurazione del URR
 ) -> AblationQueryResponse:
     """Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
 
@@ -129,7 +133,7 @@ def answer(
         chunks = index.as_retriever(similarity_top_k=top_k).retrieve(query)
 
     # Verifica chunks per la generazione della risposta
-    if not chunks:
+    if len(chunks) == 0:
         log.warning(
             "Post filtering context is empty for query '%s' and identity '%s'. Returning standard response.",
             query,
@@ -141,8 +145,11 @@ def answer(
         )
 
     else:
-        synthesizer = get_response_synthesizer()
-        llm_answer = str(synthesizer.synthesize(query, nodes=chunks))
+        if not only_urr:
+            synthesizer = get_response_synthesizer()
+            llm_answer = str(synthesizer.synthesize(query, nodes=chunks))
+        else:
+            llm_answer = "Answer not generated for URR measurements"
 
     # Se output filter è attivo allora filtra la risposta generata
     if defense_config.output_filter:
@@ -169,6 +176,7 @@ def answer(
                 "score": float(node.score) if node.score is not None else None,
                 "text_preview": node.text[:200],
                 "access_level": node.metadata.get("access_level", None),
+                "access_rank": node.metadata.get("access_rank", None),
                 "allowed_roles": node.metadata.get("allowed_roles", None),
                 "contains_secrets": node.metadata.get("contains_secrets", None),
             }
@@ -226,6 +234,8 @@ def ablation_study(
             f"---- Executing CONF-{conf.label} (QF: {conf.query_firewall}, IAR: {conf.iar}, OF: {conf.output_filter}) ----"
         )
         result = answer(query, user_identity, defense_config=conf)
+
+        # TODO: Esegue il dataset di query appartenente ad un determinato asse di attacco
 
         results_configs.append(result)
 
