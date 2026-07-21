@@ -53,30 +53,6 @@ class AuthorizationDecision:
     is_authorized: bool
     reason: Optional[str] = None # Motivo per cui l'accesso è negato, se applicabile
 
-# def authorize_chunk(chunk_metadata: dict, user: UserIdentity) -> AuthorizationDecision:
-#     """ Determina se un chunk di documento risulta accessibile per un utente sulla base dei metadati del chunk e dell'identità dell'utente.
-    
-#     Applica le regole del predicato di autorizzazione basato su access_level e allowed_roles.
-#     """
-
-#     # Verifica il livello di accesso
-#     chunk_classification_rank: int = chunk_metadata.get("access_rank", 0)  # Default a 0 (public) se non presente
-#     if user.access_level_rank < chunk_classification_rank:
-#         return AuthorizationDecision(
-#             is_authorized=False,
-#             reason=f"Accesso negato: Utente con autorizzazione inferiore al livello richiesto"
-#         )
-    
-#     # Verifica se il ruolo è tra quelli consentiti
-#     chunk_allowed_roles = [r for r in chunk_metadata.get("allowed_roles", []).split(",")]
-#     if chunk_allowed_roles and user.role not in chunk_allowed_roles:
-#         return AuthorizationDecision(
-#             is_authorized=False,
-#             reason=f"Accesso negato: Ruolo '{user.role}' non autorizzato"
-#         )
-    
-#     return AuthorizationDecision(is_authorized=True)
-    
 def authorize_chunk(chunk_metadata: dict, user: UserIdentity) -> AuthorizationDecision:
     """ Determina se un chunk di documento risulta accessibile a un'identità.
     
