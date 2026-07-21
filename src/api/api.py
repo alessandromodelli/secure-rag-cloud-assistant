@@ -6,6 +6,7 @@ Eseguibile con:
 
 Documentazione interattiva: http://localhost:8000/docs
 """
+
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -20,14 +21,14 @@ from pydantic import BaseModel, Field
 
 from src import config
 from src.IAR.identity import DEFAULT_USER, UserIdentity, ROLE_TO_ACCESS_LEVEL
-from src.RAG.secure_rag_pf import answer as secure_answer_post_filter
-from src.RAG.secure_rag import answer as secure_answer
+from src.RAG.rag_secure import answer as answer_secure
+from src.RAG.rag_iar_post_filter import answer as answer_iar_post_filter
+from src.RAG.rag_iar import answer as answer_iar
 from src.RAG.rag import answer as default_answer
 
-
-
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 log = logging.getLogger("api")
 
 # Stato globale (caricato una volta sola all'avvio)
@@ -80,10 +81,12 @@ app = FastAPI(
 # Request/Response types
 class QueryRequest(BaseModel):
     """Payload di una richiesta di query."""
+
     query: str = Field(..., min_length=1, description="La domanda dell'utente")
     top_k: Optional[int] = Field(
         default=None,
-        ge=1, le=20,
+        ge=1,
+        le=20,
         description="Numero di chunk da recuperare (default: config.SIMILARITY_TOP_K)",
     )
     # Placeholder per il futuro Identity-Aware Retrieval.
@@ -101,11 +104,10 @@ class SourceInfo(BaseModel):
     score: Optional[float]
     text_preview: str
     access_level: Optional[str] = None
+    access_rank: Optional[int] = None
     allowed_roles: Optional[str] = None
     contains_secrets: Optional[bool] = None
     score: Optional[float]
-
-
 
 
 class QueryResponse(BaseModel):
@@ -125,13 +127,14 @@ class AuditEntry(BaseModel):
     reason: Optional[str] = None
 
 
-class SecureQueryResponse(BaseModel):
+class QueryResponseIarPost(BaseModel):
     query: str
     identity: dict
     answer: str
     authorized_sources: list[SourceInfo]
     audit_log: list[AuditEntry]
     stats: dict
+
 
 class SecureQueryIarResponse(BaseModel):
     query: str
@@ -142,7 +145,17 @@ class SecureQueryIarResponse(BaseModel):
     stats: dict
 
 
+class SecureQueryResponse(BaseModel):
+    query: str
+    identity: dict
+    answer: str
+    sources: list[SourceInfo]
+    audit_log: list[AuditEntry]
+    stats: dict
+
+
 # Endpoint
+
 
 @app.get("/")
 def root() -> dict:
@@ -181,45 +194,73 @@ def query_endpoint(req: QueryRequest) -> QueryResponse:
     )
 
 
+@app.post("/secure_query_iar_post", response_model=QueryResponseIarPost)
+def secure_query_endpoint(req: QueryRequest) -> QueryResponseIarPost:
+    """Esegue una query con Identity Aware Retrieval. Se il ruolo dell'utente non è specificato, viene usato il default (public)."""
 
-@app.post("/secure-query", response_model=SecureQueryResponse)
-def secure_query_endpoint(req: QueryRequest) -> SecureQueryResponse:
-    """ Esegue una query con Identity Aware Retrieval. Se il ruolo dell'utente non è specificato, viene usato il default (public)."""
-
-    if "index" not in state: 
+    if "index" not in state:
         raise HTTPException(status_code=503, detail="Index not loaded")
-    
+
     role = (req.user_role or "public").strip().lower()
     if role not in ROLE_TO_ACCESS_LEVEL:
-        raise HTTPException(status_code=400, detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}")
-    
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}",
+        )
+
     identity = UserIdentity(user_id=f"user_{role}", role=role)
 
     top_k = req.top_k or config.SIMILARITY_TOP_K
     log.info("Query sicura (top_k=%d, user_role=%s): %s", top_k, role, req.query)
 
-    result = secure_answer_post_filter(query=req.query, identity=identity, top_k=top_k)
+    result = answer_iar_post_filter(query=req.query, identity=identity, top_k=top_k)
 
-    return SecureQueryResponse(**result)
+    return QueryResponseIarPost(**result)
 
 
 @app.post("/secure_query_iar", response_model=SecureQueryIarResponse)
 def secure_query_iar_endpoint(req: QueryRequest) -> SecureQueryIarResponse:
-    """ Esegue una query con IAR pre retrieval. """
+    """Esegue una query con IAR pre retrieval."""
 
-    if "index" not in state: 
+    if "index" not in state:
         raise HTTPException(status_code=503, detail="Index not loaded")
-    
+
     role = (req.user_role or "public").strip().lower()
     if role not in ROLE_TO_ACCESS_LEVEL:
-        raise HTTPException(status_code=400, detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}")
-    
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}",
+        )
+
     identity = UserIdentity(user_id=f"user_{role}", role=role)
 
     top_k = req.top_k or config.SIMILARITY_TOP_K
     log.info("Query sicura (top_k=%d, user_role=%s): %s", top_k, role, req.query)
 
-    result = secure_answer(query=req.query, identity=identity, top_k=top_k)
+    result = answer_iar(query=req.query, identity=identity, top_k=top_k)
 
     return SecureQueryIarResponse(**result)
 
+
+@app.post("/secure_query", response_model=SecureQueryResponse)
+def secure_query_iar_endpoint(req: QueryRequest) -> SecureQueryResponse:
+    """Esegue una query con IAR pre retrieval."""
+
+    if "index" not in state:
+        raise HTTPException(status_code=503, detail="Index not loaded")
+
+    role = (req.user_role or "public").strip().lower()
+    if role not in ROLE_TO_ACCESS_LEVEL:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ruolo utente non valido: {role}. Ruoli validi: {list(ROLE_TO_ACCESS_LEVEL.keys())}",
+        )
+
+    identity = UserIdentity(user_id=f"user_{role}", role=role)
+
+    top_k = req.top_k or config.SIMILARITY_TOP_K
+    log.info("Query (top_k=%d, user_role=%s): %s", top_k, role, req.query)
+
+    result = answer_secure(query=req.query, identity=identity, top_k=top_k)
+
+    return SecureQueryResponse(**result)
