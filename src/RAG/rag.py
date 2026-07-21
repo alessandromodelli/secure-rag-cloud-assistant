@@ -55,6 +55,9 @@ def answer(query: str, top_k: int = config.SIMILARITY_TOP_K) -> dict:
             "category": node.metadata.get("category", "unknown"),
             "score": float(node.score) if node.score is not None else None,
             "text_preview": node.text[:200],
+            "access_level": node.metadata.get("access_level", None),
+            "allowed_roles": node.metadata.get("allowed_roles", None),
+            "contains_secrets":node.metadata.get("contains_secrets", None),
         }
         for node in response.source_nodes
     ]
