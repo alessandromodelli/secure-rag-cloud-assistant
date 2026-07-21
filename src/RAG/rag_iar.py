@@ -17,33 +17,53 @@ from src import config
 from src.IAR.identity import DEFAULT_USER, UserIdentity
 from src.IAR.retriever import IdentityAwareRetriever, RetrievalResult
 
-log = logging.getLogger("secure_rag")
+log = logging.getLogger("rag_iar")
 
 _index_cache: Optional[VectorStoreIndex] = None
 
+
 def load_index() -> VectorStoreIndex:
-    """ Carica l'indice creato da ingest.py mantentendo una cache globale per evitare di ricaricarlo ad ogni richiesta. """
+    """Carica l'indice creato da ingest.py mantentendo una cache globale per evitare di ricaricarlo ad ogni richiesta."""
     global _index_cache
 
-    if _index_cache is  None:
+    if _index_cache is None:
         # Qui dovresti implementare la logica per caricare l'indice
 
-        Settings.embed_model = HuggingFaceEmbedding(model_name=config.EMBED_MODEL) # Carica embedding model
-        Settings.llm = Ollama(model=config.LLM_MODEL, request_timeout=config.LLM_REQUEST_TIMEOUT) #Carica llm
+        Settings.embed_model = HuggingFaceEmbedding(
+            model_name=config.EMBED_MODEL
+        )  # Carica embedding model
+        Settings.llm = Ollama(
+            model=config.LLM_MODEL, request_timeout=config.LLM_REQUEST_TIMEOUT
+        )  # Carica llm
 
-        chroma_client = chromadb.PersistentClient(path=str(config.CHROMA_DIR)) # Carica ChromaDB
-        chroma_collection = chroma_client.get_collection(config.CHROMA_COLLECTION) # Carica la collection ChromaDB
-        vector_store = ChromaVectorStore(chroma_collection=chroma_collection) # Crea il vector store
-        storage_context = StorageContext.from_defaults(vector_store=vector_store) # Crea il contesto di storage
+        chroma_client = chromadb.PersistentClient(
+            path=str(config.CHROMA_DIR)
+        )  # Carica ChromaDB
+        chroma_collection = chroma_client.get_collection(
+            config.CHROMA_COLLECTION
+        )  # Carica la collection ChromaDB
+        vector_store = ChromaVectorStore(
+            chroma_collection=chroma_collection
+        )  # Crea il vector store
+        storage_context = StorageContext.from_defaults(
+            vector_store=vector_store
+        )  # Crea il contesto di storage
 
-        _index_cache = VectorStoreIndex.from_vector_store(vector_store=vector_store, storage_context=storage_context) # Crea l'indice
+        _index_cache = VectorStoreIndex.from_vector_store(
+            vector_store=vector_store, storage_context=storage_context
+        )  # Crea l'indice
 
         return _index_cache
-         
+
     return _index_cache
 
-def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = config.SIMILARITY_TOP_K) -> dict:
-    """ Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
+
+def answer(
+    query: str,
+    identity: UserIdentity = DEFAULT_USER,
+    top_k: int = config.SIMILARITY_TOP_K,
+) -> dict:
+    """Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
 
     index = load_index()
     retriever = IdentityAwareRetriever(index=index, top_k=top_k)
@@ -54,10 +74,14 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
     # Il contesto vuoto potrebbe far allucinare il modello, quindi in caso restituiamo una risposta standard,
 
     if not result.chunks:
-        log.warning("Contesto post filtraggio vuoto per query '%s' e identità '%s'. Restituisco risposta standard.", query, identity)
+        log.warning(
+            "Contesto post filtraggio vuoto per query '%s' e identità '%s'. Restituisco risposta standard.",
+            query,
+            identity,
+        )
 
-        llm_answer = ("Non è stato possibile rispondere alla domanda con le informazioni disponibili con il tuo livello di accesso. ")
-    
+        llm_answer = "Non è stato possibile rispondere alla domanda con le informazioni disponibili con il tuo livello di accesso. "
+
     else:
         # Se il contesto recuperato non risulta vuoto lo utilizziamo per generare la risposta con l'LLM
 
@@ -70,7 +94,7 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
         "identity": {
             "user_id": identity.user_id,
             "role": identity.role,
-            "access_level": identity.access_level.value
+            "access_level": identity.access_level.value,
         },
         "answer": llm_answer,
         "authorized_sources": [
@@ -101,6 +125,3 @@ def answer(query: str, identity: UserIdentity = DEFAULT_USER, top_k: int = confi
             "top_k_requested": top_k,
         },
     }
-
-
-
