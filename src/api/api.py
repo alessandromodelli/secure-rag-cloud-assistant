@@ -22,6 +22,7 @@ from src import config
 from src.IAR.identity import DEFAULT_USER, UserIdentity, ROLE_TO_ACCESS_LEVEL
 from src.RAG.secure_rag_pf import answer as secure_answer_post_filter
 from src.RAG.secure_rag import answer as secure_answer
+from src.RAG.rag import answer as default_answer
 
 
 
@@ -172,26 +173,10 @@ def query_endpoint(req: QueryRequest) -> QueryResponse:
     top_k = req.top_k or config.SIMILARITY_TOP_K
     log.info("Query (top_k=%d, user_role=%s): %s", top_k, req.user_role, req.query)
 
-    query_engine = state["index"].as_query_engine(similarity_top_k=top_k)
-    response = query_engine.query(req.query)
-
-    sources = [
-        SourceInfo(
-            source=node.metadata.get("source", "unknown"),
-            category=node.metadata.get("category", "unknown"),
-            score=float(node.score) if node.score is not None else None,
-            text_preview=node.text[:200],
-            access_level=node.metadata.get("access_level", None),
-            allowed_roles=node.metadata.get("allowed_roles", None).split(","),
-            contains_secrets=node.metadata.get("contains_secrets", None),
-        )
-        for node in response.source_nodes
-    ]
+    result = default_answer(query=req.query, top_k=top_k)
 
     return QueryResponse(
-        query=req.query,
-        answer=str(response),
-        sources=sources,
+        **result,
         user_role=req.user_role,
     )
 
