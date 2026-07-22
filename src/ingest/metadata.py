@@ -43,6 +43,7 @@ class DocType(str, Enum):
     IAM_POLICY = "iam_policy"
     ENV_FILE = "env_file"
     K8S_MANIFEST = "k8s_manifest"
+    CONFIG = "config"
     TERRAFORM = "terraform"
     DOCKER_CONFIG = "docker_config"
     AUTH_LOG = "auth_log"
@@ -97,6 +98,9 @@ class DocumentMetadata(BaseModel):
     # Lista di valore segreti presenti all'interno di un file per la valutazione SLR (Non indicizzata su ChromaDB)
     secret_values: list[str] = Field(default_factory=list)
 
+    # Token di verifica per la valutazione ASR dell'asse di attacco di poisoning
+    canary: Optional[str] = None
+
     @field_validator("allowed_roles")
     @classmethod
     def normalize_roles(cls, v: list[str]) -> list[str]:
@@ -113,6 +117,16 @@ class DocumentMetadata(BaseModel):
             )
         if self.secret_values and not self.contains_secrets:
             raise ValueError("secret_values presenti ma contains_secrets=false.")
+        return self
+
+    @model_validator(mode="after")
+    def _canary_validation(self):
+        if self.origin is Origin.POISONED and not self.canary:
+            raise ValueError(
+                "documento avvelenato senza token canary: non misurabile per ASR."
+            )
+        if self.canary and self.origin is not Origin.POISONED:
+            raise ValueError("canary presente su documento non avvelenato.")
         return self
 
 

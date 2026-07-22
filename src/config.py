@@ -2,6 +2,7 @@
 Configurazione centrale del sistema RAG.
 Tutte le scelte di stack (modelli, percorsi, parametri) vivono qui.
 """
+
 from pathlib import Path
 
 # --- Percorsi ---
@@ -20,9 +21,10 @@ LLM_REQUEST_TIMEOUT = 120.0  # secondi, generoso per CPU/Metal
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
 
 # --- Parametri RAG ---
-CHUNK_SIZE = 512            # token per chunk
-CHUNK_OVERLAP = 64          # overlap tra chunk consecutivi
-SIMILARITY_TOP_K = 4        # quanti chunk recuperare per ogni query
+CHUNK_SIZE = 512  # token per chunk
+CHUNK_OVERLAP = 64  # overlap tra chunk consecutivi
+SIMILARITY_TOP_K = 4  # quanti chunk recuperare per ogni query
 
 # --- Vector DB ---
 CHROMA_COLLECTION = "cloud_corpus"
+CHROMA_COLLECTION_POISONED = "cloud_corpus_poisoned"
