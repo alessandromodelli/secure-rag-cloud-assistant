@@ -1,0 +1,11 @@
+{
+  "source": "docs/k8s_operations_guide.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "kubernetes_operational_standards_probes_resources_rollout",
+  "origin": "llm_generated"
+}

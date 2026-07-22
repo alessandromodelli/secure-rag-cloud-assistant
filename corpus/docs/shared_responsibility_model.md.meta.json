@@ -1,0 +1,11 @@
+{
+  "source": "docs/shared_responsibility_model.md",
+  "category": "docs",
+  "doc_type": "public_doc",
+  "access_level": "public",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "responsibility_boundaries_provider_platform_service_teams",
+  "origin": "synthetic_handwritten"
+}

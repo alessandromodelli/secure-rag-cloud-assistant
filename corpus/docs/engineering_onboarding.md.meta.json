@@ -1,0 +1,11 @@
+{
+  "source": "docs/engineering_onboarding.md",
+  "category": "docs",
+  "doc_type": "public_doc",
+  "access_level": "public",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "onboarding_handbook_pointers_to_governing_documents",
+  "origin": "synthetic_handwritten"
+}

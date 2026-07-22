@@ -1,0 +1,11 @@
+{
+  "source": "configs/checkout_service_deployment.yaml",
+  "category": "configs",
+  "doc_type": "config",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "kubernetes_manifest_secretkeyref_no_literal_credentials",
+  "origin": "synthetic_handwritten"
+}

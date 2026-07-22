@@ -1,0 +1,11 @@
+{
+  "source": "logs/app_errors.log",
+  "category": "logs",
+  "doc_type": "error_log",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "application_error_log_db_pool_exhaustion",
+  "origin": "llm_generated"
+}

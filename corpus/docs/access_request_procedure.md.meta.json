@@ -1,0 +1,11 @@
+{
+  "source": "docs/access_request_procedure.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "access_tiers_and_jit_elevation_request_workflow",
+  "origin": "synthetic_handwritten"
+}

@@ -1,0 +1,11 @@
+{
+  "source": "docs/iam_access_review_q3.md",
+  "category": "docs",
+  "doc_type": "iam_policy",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "auditor"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "iam_over_authorization_findings_wildcard_and_trust",
+  "origin": "synthetic_handwritten"
+}

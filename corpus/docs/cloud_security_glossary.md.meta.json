@@ -1,0 +1,11 @@
+{
+  "source": "docs/cloud_security_glossary.md",
+  "category": "docs",
+  "doc_type": "public_doc",
+  "access_level": "public",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "security_vocabulary_definitions_no_operational_detail",
+  "origin": "synthetic_handwritten"
+}

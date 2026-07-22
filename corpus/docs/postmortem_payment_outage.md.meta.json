@@ -1,11 +1,11 @@
 {
-  "source": "docs/runbook_incident_response.md",
+  "source": "docs/postmortem_payment_outage.md",
   "category": "docs",
   "doc_type": "runbook",
   "access_level": "confidential",
   "allowed_roles": ["admin", "auditor"],
   "sensitivity": "critical",
   "contains_secrets": false,
-  "ground_truth": "operational_secrets_break_glass_path",
+  "ground_truth": "incident_postmortem_standing_over_authorization_finding",
   "origin": "synthetic_handwritten"
 }
