@@ -9,7 +9,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class AccessLevel(str, Enum):
@@ -17,6 +17,7 @@ class AccessLevel(str, Enum):
     Gerarchia del livello di abilitazione basato sul modello Bell-LaPadula.
     Un utente con clearance L può accedere ai documenti con livello <= L.
     """
+
     PUBLIC = "public"
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
@@ -30,13 +31,15 @@ class AccessLevel(str, Enum):
 
 class Sensitivity(str, Enum):
     """Impatto stimato in caso di leakage."""
-    BENIGN = "benign"          # leakage trascurabile
-    SENSITIVE = "sensitive"    # leakage problematico
-    CRITICAL = "critical"      # leakage dannoso (credenziali, escalation paths)
+
+    BENIGN = "benign"  # leakage trascurabile
+    SENSITIVE = "sensitive"  # leakage problematico
+    CRITICAL = "critical"  # leakage dannoso (credenziali, escalation paths)
 
 
 class DocType(str, Enum):
     """Tipo specifico del documento (sottocategoria di `category`)."""
+
     IAM_POLICY = "iam_policy"
     ENV_FILE = "env_file"
     K8S_MANIFEST = "k8s_manifest"
@@ -47,11 +50,12 @@ class DocType(str, Enum):
     ERROR_LOG = "error_log"
     RUNBOOK = "runbook"
     PUBLIC_DOC = "public_doc"
-    POISONED = "poisoned"  # documento avvelenato 
+    POISONED = "poisoned"  # documento avvelenato
 
 
 class Origin(str, Enum):
     """Provenienza del documento."""
+
     HANDWRITTEN = "synthetic_handwritten"
     TEMPLATE = "synthetic_template"
     EXTERNAL_DATASET = "external_dataset"
@@ -62,7 +66,7 @@ class Origin(str, Enum):
 class DocumentMetadata(BaseModel):
     """Schema completo dei metadati di un documento."""
 
-    # Identità 
+    # Identità
     source: str = Field(..., description="Path relativo a corpus/")
     category: str = Field(..., description="Sottocartella di corpus/ (iam/secrets/...)")
     doc_type: DocType
@@ -72,7 +76,7 @@ class DocumentMetadata(BaseModel):
     allowed_roles: list[str] = Field(
         default_factory=list,
         description="Ruoli autorizzati ([] = tutti i ruoli col "
-                    "corretto access_level)",
+        "corretto access_level)",
     )
     sensitivity: Sensitivity
     contains_secrets: bool = Field(
@@ -80,21 +84,36 @@ class DocumentMetadata(BaseModel):
         description="Indica presenza di credenziali/token/chiavi (anche fittizi)",
     )
 
-    # Ground truth sperimentale 
+    # Ground truth sperimentale
     ground_truth: Optional[str] = Field(
         default=None,
         description="Etichetta per esperimenti (es. 'wildcard_action', "
-                    "'hardcoded_secret', 'clean_baseline')",
+        "'hardcoded_secret', 'clean_baseline')",
     )
 
-    # Provenienza 
+    # Provenienza
     origin: Origin
+
+    # Lista di valore segreti presenti all'interno di un file per la valutazione SLR (Non indicizzata su ChromaDB)
+    secret_values: list[str] = Field(default_factory=list)
 
     @field_validator("allowed_roles")
     @classmethod
     def normalize_roles(cls, v: list[str]) -> list[str]:
         """Lowercase e dedup."""
         return sorted({r.strip().lower() for r in v if r.strip()})
+
+    # Controllo coerenza tra secret_value e contains_secrets
+    @model_validator(mode="after")
+    def _secret_values_validation(self):
+        if self.contains_secrets and not self.secret_values:
+            raise ValueError(
+                "contains_secrets=true richiede secret_values non vuoto: senza "
+                "valori canonici il documento non è misurabile dall'oracolo SLR."
+            )
+        if self.secret_values and not self.contains_secrets:
+            raise ValueError("secret_values presenti ma contains_secrets=false.")
+        return self
 
 
 # Lista dei ruoli usati nel sistema.

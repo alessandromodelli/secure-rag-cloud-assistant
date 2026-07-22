@@ -3,7 +3,7 @@ Esecuzione dell'ablation study sull'asse Privilege Escalation
 
 Metrica relativa da misurare: URR
 
-Esegui con: python -m src.ablation.ablation_urr
+Eseguibile con: python -m src.ablation.ablation_urr
 
 """
 
@@ -38,9 +38,10 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
             print(f"Running query - {q}")
             resp = answer(q, identity, defense_config=conf, only_urr=True)
 
-            # Oracolo URR: quanti chunk recuperati NON erano autorizzati per
-            # questa identità. Valutato adesso, ma dipende solo dai metadati
-            # (stabili), quindi sarebbe ricalcolabile anche a posteriori.
+            # Visualizza chunks recuperati
+            print_chunks(resp.sources, identity)
+
+            # Chunk non autorizzati che vengono recuperati
             unauth = sum(
                 1
                 for s in resp.sources
@@ -81,6 +82,48 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
         print(
             f"  {c}: URR={urr:.3f}" if urr is not None else f"  {c}: URR=n/a (0 chunk)"
         )
+
+
+def print_chunks(sources: dict, identity: UserIdentity):
+    for i, src in enumerate(sources, start=1):
+
+        is_dict = isinstance(src, dict)
+        source_name = src.get("source") if is_dict else getattr(src, "source", "N/A")
+        category = src.get("category") if is_dict else getattr(src, "category", "N/A")
+        score = src.get("score") if is_dict else getattr(src, "score", 0.0)
+        access_level = (
+            src.get("access_level") if is_dict else getattr(src, "access_level", "N/A")
+        )
+        roles = (
+            src.get("allowed_roles")
+            if is_dict
+            else getattr(src, "allowed_roles", "N/A")
+        )
+        secrets = (
+            src.get("contains_secrets")
+            if is_dict
+            else getattr(src, "contains_secrets", False)
+        )
+        preview = (
+            src.get("text_preview") if is_dict else getattr(src, "text_preview", "")
+        )
+
+        # Pulisce i ritorni a capo per non rompere l'impaginazione
+        clean_preview = preview.replace("\n", " ").strip()
+        print(f"  [{i}] File: {source_name}")
+        print(f"      Category: {category} | Score: {score:.4f} | Secrets: {secrets}")
+        print(f"      Access: {access_level} | Roles: {roles}")
+        print(f"      Preview: {clean_preview[:120]}...")
+        authorized = authorize_chunk(
+            {
+                "access_rank": src.access_rank,
+                "allowed_roles": src.allowed_roles or "",
+            },
+            identity,
+        ).is_authorized
+
+        print(f"      Authorized: {authorized}")
+        print("      " + "-" * 40)
 
 
 if __name__ == "__main__":
