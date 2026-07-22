@@ -56,7 +56,7 @@ def secret_in_output(
     ]
 
 
-def run_slr(out_path: str = "slr_facts.csv") -> None:
+def run_slr(out_path: str = "slr_results.csv") -> None:
     corpus_secrets = load_secret_values(config.CORPUS_DIR)
     identity = UserIdentity(user_id="attacker", role=PROBE_ROLE)
     rows: list[dict] = []
