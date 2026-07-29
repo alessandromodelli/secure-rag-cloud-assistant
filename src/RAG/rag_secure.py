@@ -84,7 +84,7 @@ class AuditEntry(BaseModel):
     reason: Optional[str] = None
 
 
-class AblationQueryResponse(BaseModel):
+class SecureQueryResponse(BaseModel):
     query: str
     identity: dict
     answer: str
@@ -97,7 +97,8 @@ def answer(
     query: str,
     identity: UserIdentity = DEFAULT_USER,
     top_k: int = project_settings.SIMILARITY_TOP_K,
-) -> AblationQueryResponse:
+    index: Optional[VectorStoreIndex] = None,
+) -> SecureQueryResponse:
     """Esegue una query sul sistema RAG completo di difese.
 
     1. La query viene filtrata dal Query Firewall
@@ -109,7 +110,8 @@ def answer(
     if DEFAULT_QUERY_FIREWALL.inspect(query).blocked:
         return _blocked_response(query, identity, top_k)
 
-    index = load_index()
+    if index is None:
+        index = load_index()
 
     # Identity Aware Retrival
     result = IdentityAwareRetriever(index, top_k).retrieve(query, identity)
@@ -139,7 +141,7 @@ def answer(
         1 for n in chunks if (n.metadata or {}).get("contains_secrets")
     )
 
-    return AblationQueryResponse(
+    return SecureQueryResponse(
         query=query,
         identity={
             "user_id": identity.user_id,
@@ -182,8 +184,8 @@ def answer(
 
 def _blocked_response(
     query: str, identity: UserIdentity, top_k: int
-) -> AblationQueryResponse:
-    return AblationQueryResponse(
+) -> SecureQueryResponse:
+    return SecureQueryResponse(
         query=query,
         identity={
             "user_id": identity.user_id,
