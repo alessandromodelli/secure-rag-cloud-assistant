@@ -19,7 +19,7 @@ from collections import defaultdict
 
 from src import config
 from src.ablation.ablation_configs import CONFIGS
-from src.ablation.ablation_rag import answer
+from src.RAG.rag_ablation import answer
 from src.ablation.query_set import QUERY_ROLE, BENIGN_QUERIES
 
 from src.IAR.identity import UserIdentity

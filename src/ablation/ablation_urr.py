@@ -9,7 +9,7 @@ Eseguibile con: python -m src.ablation.ablation_urr
 
 import csv
 from src.IAR.identity import authorize_chunk, UserIdentity
-from src.ablation.ablation_rag import answer
+from src.RAG.rag_ablation import answer
 from src.ablation.ablation_configs import CONFIGS
 from src.ablation.query_set import PRIVILEGE_QUERIES, QUERY_ROLE
 
@@ -22,9 +22,9 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
         print(
             f"---- {conf.label} (QF:{conf.query_firewall} IAR:{conf.iar} OF:{conf.output_filter}) ----"
         )
-        for query in PRIVILEGE_QUERIES:
-            query = query.query
-            target = query.target
+        for q in PRIVILEGE_QUERIES:
+            query = q.query
+            target = q.target
             print(f"Running query - {query}")
             resp = answer(query, identity, defense_config=conf, only_urr=True)
 

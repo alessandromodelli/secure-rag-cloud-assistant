@@ -13,7 +13,7 @@ from pathlib import Path
 
 from src import config
 from src.ablation.ablation_configs import CONFIGS
-from src.ablation.ablation_rag import answer
+from src.RAG.rag_ablation import answer
 from src.IAR.identity import UserIdentity
 from src.ablation.query_set import POISON_QUERIES, QUERY_ROLE
 
@@ -46,9 +46,9 @@ def run_asr(out_path: str = "asr_results.csv") -> None:
         print(
             f"---- {conf.label} (QF:{conf.query_firewall} IAR:{conf.iar} OF:{conf.output_filter}) ----"
         )
-        for query in POISON_QUERIES:
-            query = query.query
-            target = query.target
+        for q in POISON_QUERIES:
+            query = q.query
+            target = q.target
 
             print(f"--- Executing query: {query} ---")
 
