@@ -1,24 +1,17 @@
 """
-Valutazione della QUALITÀ e del COSTO delle difese, sulle query benigne.
+Esecuzione dell'ablation study su query benigne per misurare la qualità del sistema nelle differenti configurazioni.
 
-A differenza dei tre assi d'attacco, qui non si misura l'efficacia di una
-difesa ma il prezzo che impone al traffico legittimo:
+Metriche misurate:
+- Recall@K: il file target viene recuperato correttamente?
+- Precision@K: quanti dei documenti recuperati sono rilevanti?
+- False Positive Rate L1 (FPR L1): il Query Firewall blocca query legittime?
+- False Positive Rate L3 (FPR L2): l'Output Filter redige contenuto non segreto?
 
-  Recall@K    : il documento bersaglio raggiunge il contesto? Differente dalla Recall classica (utilità)
-  Precision@K : quanta parte del contesto è pertinente?      (qualità ranking)
-  FPR L1      : il firewall blocca query legittime?           (costo di L1)
-  FPR L3      : l'output filter redige contenuto non segreto? (costo di L3)
+Recall e Precision vengono contati su documenti distinti e non su chunk, quindi più
+chunk dello stesso documento nei top-k contano come un documento
+recuperato.
 
-Recall e Precision si contano su DOCUMENTI DISTINTI, non su chunk: più
-frammenti dello stesso documento nei top-k contano come un documento
-recuperato. Contarli come chunk gonfierebbe o abbasserebbe artificiosamente
-la precisione a seconda della frammentazione del corpus.
-
-FPR L1 e FPR L3 leggono punti diversi della pipeline: il primo l'esito del
-firewall (nessuna generazione necessaria), il secondo l'output redatto (la
-generazione serve). Per questo il runner NON cortocircuita l'LLM.
-
-    python -m src.ablation.run_benign
+Eseguibile con: python -m src.ablation.ablation_benign
 """
 
 import csv
@@ -52,10 +45,10 @@ def run_benign(out_path: str = "benign_results.csv") -> None:
             context_docs = distinct_docs(resp.sources)
             relevant = query.relevant_set()
 
-            # Se il firewall blocca la query, il retrieval non fallisce, ma viene bloccato a monte
+            # FPR L1: Se il firewall blocca la query, il retrieval non fallisce
             firewall_blocked = len(resp.sources) == 0 and conf.query_firewall
 
-            # Recall@K binaria, verifica se target presente nel contesto
+            # Recall@K, verifica se target presente nel contesto
             target_retrieved = query.target in context_docs
 
             # Precision@K a livello documento = documenti pertinenti / documenti distinti recuperati.
@@ -88,7 +81,7 @@ def run_benign(out_path: str = "benign_results.csv") -> None:
                     # utilità
                     "target_retrieved": target_retrieved,
                     "firewall_blocked": firewall_blocked,
-                    # qualità ranking
+                    # qualità del retriever
                     "n_context_docs": n_context_docs,
                     "n_relevant_retrieved": n_relevant_retrieved,
                     "n_relevant_total": len(relevant),
@@ -122,8 +115,7 @@ def _report(rows: list[dict]) -> None:
         c = r["config"]
 
         # Recall: conta solo le query NON bloccate dal firewall. Una query
-        # bloccata non è un fallimento di recall, è un falso positivo di L1,
-        # e conteggiarla come recall=0 confonderebbe le due cause.
+        # bloccata non è un fallimento di recall, è un falso positivo di L1
         if not r["firewall_blocked"]:
             recall_tot[c] += 1
             recall_hit[c] += int(r["target_retrieved"])
