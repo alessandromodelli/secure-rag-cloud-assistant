@@ -18,49 +18,50 @@ from pydantic import BaseModel
 from src import project_settings
 from src.IAR.identity import DEFAULT_USER, UserIdentity
 from src.IAR.retriever import IdentityAwareRetriever
+from src.ingest.load_index import load_index
 from src.output_filter.output_filter import DEFAULT_OUTPUT_FILTER
 from src.query_firewall.query_firewall import DEFAULT_QUERY_FIREWALL
 
 log = logging.getLogger("rag_secure")
 
-_index_cache: Optional[VectorStoreIndex] = None
+# _index_cache: Optional[VectorStoreIndex] = None
 
 
-def load_index() -> VectorStoreIndex:
-    """Carica l'indice creato da ingest.py mantentendo una cache globale per evitare di ricaricarlo ad ogni richiesta."""
-    global _index_cache
+# def load_index() -> VectorStoreIndex:
+#     """Carica l'indice creato da ingest.py mantentendo una cache globale per evitare di ricaricarlo ad ogni richiesta."""
+#     global _index_cache
 
-    if _index_cache is None:
-        # Qui dovresti implementare la logica per caricare l'indice
+#     if _index_cache is None:
+#         # Qui dovresti implementare la logica per caricare l'indice
 
-        Settings.embed_model = HuggingFaceEmbedding(
-            model_name=project_settings.EMBED_MODEL
-        )  # Carica embedding model
-        Settings.llm = Ollama(
-            model=project_settings.LLM_MODEL,
-            request_timeout=project_settings.LLM_REQUEST_TIMEOUT,
-        )  # Carica llm
+#         Settings.embed_model = HuggingFaceEmbedding(
+#             model_name=project_settings.EMBED_MODEL
+#         )  # Carica embedding model
+#         Settings.llm = Ollama(
+#             model=project_settings.LLM_MODEL,
+#             request_timeout=project_settings.LLM_REQUEST_TIMEOUT,
+#         )  # Carica llm
 
-        chroma_client = chromadb.PersistentClient(
-            path=str(project_settings.CHROMA_DIR)
-        )  # Carica ChromaDB
-        chroma_collection = chroma_client.get_collection(
-            project_settings.CHROMA_COLLECTION
-        )  # Carica la collection ChromaDB
-        vector_store = ChromaVectorStore(
-            chroma_collection=chroma_collection
-        )  # Crea il vector store
-        storage_context = StorageContext.from_defaults(
-            vector_store=vector_store
-        )  # Crea il contesto di storage
+#         chroma_client = chromadb.PersistentClient(
+#             path=str(project_settings.CHROMA_DIR)
+#         )  # Carica ChromaDB
+#         chroma_collection = chroma_client.get_collection(
+#             project_settings.CHROMA_COLLECTION
+#         )  # Carica la collection ChromaDB
+#         vector_store = ChromaVectorStore(
+#             chroma_collection=chroma_collection
+#         )  # Crea il vector store
+#         storage_context = StorageContext.from_defaults(
+#             vector_store=vector_store
+#         )  # Crea il contesto di storage
 
-        _index_cache = VectorStoreIndex.from_vector_store(
-            vector_store=vector_store, storage_context=storage_context
-        )  # Crea l'indice
+#         _index_cache = VectorStoreIndex.from_vector_store(
+#             vector_store=vector_store, storage_context=storage_context
+#         )  # Crea l'indice
 
-        return _index_cache
+#         return _index_cache
 
-    return _index_cache
+#     return _index_cache
 
 
 class SourceInfo(BaseModel):

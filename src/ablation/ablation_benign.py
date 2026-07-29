@@ -18,7 +18,7 @@ import csv
 from collections import defaultdict
 
 from src.ablation.ablation_configs import CONFIGS
-from src.RAG.rag_ablation import answer
+from src.ablation.rag_ablation import answer
 from src.ablation.query_set import QUERY_ROLE, BENIGN_QUERIES
 
 from src.IAR.identity import UserIdentity

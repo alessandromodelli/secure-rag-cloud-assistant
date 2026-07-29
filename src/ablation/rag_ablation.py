@@ -25,54 +25,18 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 from pydantic import BaseModel
 
-from src import config
+from src import project_settings
 from src.IAR.identity import DEFAULT_USER, UserIdentity
 from src.IAR.retriever import IdentityAwareRetriever
 
 from src.ablation.ablation_configs import CONFIGS, DefenceConfig
 
+from src.ingest.load_index import load_index
 from src.query_firewall.query_firewall import DEFAULT_QUERY_FIREWALL
 
 from src.output_filter.output_filter import DEFAULT_OUTPUT_FILTER
 
 log = logging.getLogger("ablation_rag")
-
-_index_cache: dict[str, VectorStoreIndex] = {}
-
-
-def load_index(collection: str = config.CHROMA_COLLECTION) -> VectorStoreIndex:
-    """Carica l'indice di una collection mantentendo una cache globale per evitare di ricaricarlo ad ogni richiesta."""
-    if collection not in _index_cache:
-        if not _index_cache:
-            # Configurazione globale di Settings
-            Settings.embed_model = HuggingFaceEmbedding(
-                model_name=config.EMBED_MODEL,
-            )  # Carica embedding model
-            Settings.llm = Ollama(
-                model=config.LLM_MODEL,
-                request_timeout=config.LLM_REQUEST_TIMEOUT,
-                temperature=0.0,  # Generazione riproducibile
-                additional_kwargs={"seed": 42},
-            )  # Carica llm
-        chroma_client = chromadb.PersistentClient(
-            path=str(config.CHROMA_DIR)
-        )  # Carica ChromaDB
-
-        chroma_collection = chroma_client.get_collection(
-            collection
-        )  # Carica la collection ChromaDB
-        vector_store = ChromaVectorStore(
-            chroma_collection=chroma_collection
-        )  # Crea il vector store
-        storage_context = StorageContext.from_defaults(
-            vector_store=vector_store
-        )  # Crea il contesto di storage
-
-        _index_cache[collection] = VectorStoreIndex.from_vector_store(
-            vector_store=vector_store, storage_context=storage_context
-        )  # Crea l'indice
-
-    return _index_cache[collection]
 
 
 class SourceInfo(BaseModel):
@@ -110,11 +74,11 @@ def answer(
     query: str,
     identity: UserIdentity = DEFAULT_USER,
     defense_config: DefenceConfig = CONFIGS["C7"],
-    top_k: int = config.SIMILARITY_TOP_K,
+    top_k: int = project_settings.SIMILARITY_TOP_K,
     only_urr: Optional[
         bool
     ] = False,  # Settare a True per evitare la generazione LLM non necessaria per la misurazione del URR
-    collection: str = config.CHROMA_COLLECTION,
+    collection: str = project_settings.CHROMA_COLLECTION,
 ) -> AblationQueryResponse:
     """Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
 
@@ -122,7 +86,9 @@ def answer(
     if defense_config.query_firewall and DEFAULT_QUERY_FIREWALL.inspect(query).blocked:
         return _blocked_response(query, identity, top_k, defense_config=defense_config)
 
-    index = load_index(collection=collection)
+    index = load_index(
+        collection=collection, temperature=0.0
+    )  # Temperature per generazione riproducibile
 
     # Se iar è attivo applica Identity Aware Retrival altrimenti il retrieval standard
     if defense_config.iar:
