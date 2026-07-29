@@ -19,7 +19,7 @@ from llama_index.llms.ollama import Ollama
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from pydantic import BaseModel, Field
 
-from src import config
+from src import project_settings
 from src.IAR.identity import DEFAULT_USER, UserIdentity, ROLE_TO_ACCESS_LEVEL
 from src.RAG.rag_secure import answer as answer_secure
 from src.RAG.rag_iar_post_filter import answer as answer_iar_post_filter
@@ -42,18 +42,18 @@ state: dict = {}
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Inizializza l'indice all'avvio, lo distrugge alla chiusura."""
-    log.info("Avvio: carico modello di embedding %s", config.EMBED_MODEL)
-    Settings.embed_model = HuggingFaceEmbedding(model_name=config.EMBED_MODEL)
+    log.info("Avvio: carico modello di embedding %s", project_settings.EMBED_MODEL)
+    Settings.embed_model = HuggingFaceEmbedding(model_name=project_settings.EMBED_MODEL)
 
     log.info("Avvio: configuro LLM %s via Ollama", config.LLM_MODEL)
     Settings.llm = Ollama(
-        model=config.LLM_MODEL,
-        request_timeout=config.LLM_REQUEST_TIMEOUT,
+        model=project_settings.LLM_MODEL,
+        request_timeout=project_settings.LLM_REQUEST_TIMEOUT,
     )
 
-    log.info("Avvio: apro ChromaDB in %s", config.CHROMA_DIR)
-    chroma_client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
-    chroma_collection = chroma_client.get_collection(config.CHROMA_COLLECTION)
+    log.info("Avvio: apro ChromaDB in %s", project_settings.CHROMA_DIR)
+    chroma_client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
+    chroma_collection = chroma_client.get_collection(project_settings.CHROMA_COLLECTION)
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
@@ -164,8 +164,8 @@ def root() -> dict:
         "service": "secure-rag",
         "status": "running",
         "chunks_indexed": state.get("chunk_count", 0),
-        "llm": config.LLM_MODEL,
-        "embed_model": config.EMBED_MODEL,
+        "llm": project_settings.LLM_MODEL,
+        "embed_model": project_settings.EMBED_MODEL,
     }
 
 
@@ -183,7 +183,7 @@ def query_endpoint(req: QueryRequest) -> QueryResponse:
     if "index" not in state:
         raise HTTPException(status_code=503, detail="Index not loaded")
 
-    top_k = req.top_k or config.SIMILARITY_TOP_K
+    top_k = req.top_k or project_settings.SIMILARITY_TOP_K
     log.info("Query (top_k=%d, user_role=%s): %s", top_k, req.user_role, req.query)
 
     result = default_answer(query=req.query, top_k=top_k)
@@ -210,7 +210,7 @@ def secure_query_endpoint(req: QueryRequest) -> QueryResponseIarPost:
 
     identity = UserIdentity(user_id=f"user_{role}", role=role)
 
-    top_k = req.top_k or config.SIMILARITY_TOP_K
+    top_k = req.top_k or project_settings.SIMILARITY_TOP_K
     log.info("Query sicura (top_k=%d, user_role=%s): %s", top_k, role, req.query)
 
     result = answer_iar_post_filter(query=req.query, identity=identity, top_k=top_k)
@@ -234,7 +234,7 @@ def secure_query_iar_endpoint(req: QueryRequest) -> SecureQueryIarResponse:
 
     identity = UserIdentity(user_id=f"user_{role}", role=role)
 
-    top_k = req.top_k or config.SIMILARITY_TOP_K
+    top_k = req.top_k or project_settings.SIMILARITY_TOP_K
     log.info("Query sicura (top_k=%d, user_role=%s): %s", top_k, role, req.query)
 
     result = answer_iar(query=req.query, identity=identity, top_k=top_k)
@@ -258,7 +258,7 @@ def secure_query_iar_endpoint(req: QueryRequest) -> SecureQueryResponse:
 
     identity = UserIdentity(user_id=f"user_{role}", role=role)
 
-    top_k = req.top_k or config.SIMILARITY_TOP_K
+    top_k = req.top_k or project_settings.SIMILARITY_TOP_K
     log.info("Query (top_k=%d, user_role=%s): %s", top_k, role, req.query)
 
     result = answer_secure(query=req.query, identity=identity, top_k=top_k)

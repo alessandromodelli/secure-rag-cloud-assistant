@@ -15,7 +15,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
 from pydantic import BaseModel
 
-from src import config
+from src import project_settings
 from src.IAR.identity import DEFAULT_USER, UserIdentity
 from src.IAR.retriever import IdentityAwareRetriever
 from src.output_filter.output_filter import DEFAULT_OUTPUT_FILTER
@@ -34,17 +34,18 @@ def load_index() -> VectorStoreIndex:
         # Qui dovresti implementare la logica per caricare l'indice
 
         Settings.embed_model = HuggingFaceEmbedding(
-            model_name=config.EMBED_MODEL
+            model_name=project_settings.EMBED_MODEL
         )  # Carica embedding model
         Settings.llm = Ollama(
-            model=config.LLM_MODEL, request_timeout=config.LLM_REQUEST_TIMEOUT
+            model=project_settings.LLM_MODEL,
+            request_timeout=project_settings.LLM_REQUEST_TIMEOUT,
         )  # Carica llm
 
         chroma_client = chromadb.PersistentClient(
-            path=str(config.CHROMA_DIR)
+            path=str(project_settings.CHROMA_DIR)
         )  # Carica ChromaDB
         chroma_collection = chroma_client.get_collection(
-            config.CHROMA_COLLECTION
+            project_settings.CHROMA_COLLECTION
         )  # Carica la collection ChromaDB
         vector_store = ChromaVectorStore(
             chroma_collection=chroma_collection
@@ -95,7 +96,7 @@ class AblationQueryResponse(BaseModel):
 def answer(
     query: str,
     identity: UserIdentity = DEFAULT_USER,
-    top_k: int = config.SIMILARITY_TOP_K,
+    top_k: int = project_settings.SIMILARITY_TOP_K,
 ) -> AblationQueryResponse:
     """Esegue una query sul sistema RAG completo di difese.
 

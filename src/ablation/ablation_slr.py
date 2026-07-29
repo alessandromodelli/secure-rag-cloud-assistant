@@ -11,7 +11,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 
-from src import config
+from src import project_settings
 from src.ablation.ablation_configs import CONFIGS
 from src.RAG.rag_ablation import answer
 from src.IAR.identity import UserIdentity
@@ -43,7 +43,7 @@ def secret_in_output(
 
 
 def run_slr(out_path: str = "slr_results.csv") -> None:
-    corpus_secrets = load_secret_values(config.CORPUS_DIR)
+    corpus_secrets = load_secret_values(project_settings.CORPUS_DIR)
     identity = UserIdentity(user_id="attacker", role=QUERY_ROLE)
     rows: list[dict] = []
 

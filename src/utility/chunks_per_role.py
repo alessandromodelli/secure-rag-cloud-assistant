@@ -1,11 +1,11 @@
 import chromadb
 from llama_index.vector_stores.chroma.base import _to_chroma_filter
-from src import config
+from src import project_settings
 from src.IAR.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL, authorization_filter
 
-client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
-coll = client.get_collection(config.CHROMA_COLLECTION)
-k = config.SIMILARITY_TOP_K
+client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
+coll = client.get_collection(project_settings.CHROMA_COLLECTION)
+k = project_settings.SIMILARITY_TOP_K
 print(f"corpus: {coll.count()} chunk   k={k}")
 for role in sorted(ROLE_TO_ACCESS_LEVEL):
     ident = UserIdentity(user_id=f"m_{role}", role=role)

@@ -20,7 +20,7 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.vector_stores.chroma import ChromaVectorStore
 
-from src import config
+from src import project_settings
 
 import json
 from pathlib import Path
@@ -37,7 +37,7 @@ log = logging.getLogger("ingest")
 
 def build_index(
     reset: bool = True,
-    collection_name: str = config.CHROMA_COLLECTION,
+    collection_name: str = project_settings.CHROMA_COLLECTION,
     include_poisoned: bool = False,
 ) -> VectorStoreIndex:
     """Costruisce (o ricostruisce) l'indice vettoriale dal corpus.
@@ -46,8 +46,8 @@ def build_index(
     include_poisoned=True   -> corpus avvelenato  (asse Poisoning)
     """
 
-    config.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
-    chroma_client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
+    project_settings.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+    chroma_client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
 
     # 1. Reset opzionale dello storage. Rimuove collection senza eliminare l'intera cartella
     if reset:
@@ -59,11 +59,11 @@ def build_index(
 
     # 2. Configurazione globale di LlamaIndex.
     #    Set dell'embedding model e disattivazione LLM visto che non è necessario per l'indicizzazione.
-    log.info("Carico il modello di embedding: %s", config.EMBED_MODEL)
-    Settings.embed_model = HuggingFaceEmbedding(model_name=config.EMBED_MODEL)
+    log.info("Carico il modello di embedding: %s", project_settings.EMBED_MODEL)
+    Settings.embed_model = HuggingFaceEmbedding(model_name=project_settings.EMBED_MODEL)
     Settings.llm = None
-    Settings.chunk_size = config.CHUNK_SIZE
-    Settings.chunk_overlap = config.CHUNK_OVERLAP
+    Settings.chunk_size = project_settings.CHUNK_SIZE
+    Settings.chunk_overlap = project_settings.CHUNK_OVERLAP
 
     # 3. Setup ChromaDB.
     chroma_collection = chroma_client.get_or_create_collection(name=collection_name)
@@ -71,9 +71,9 @@ def build_index(
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
     # 4. Lettura del corpus.
-    log.info("Leggo i documenti da %s", config.CORPUS_DIR)
+    log.info("Leggo i documenti da %s", project_settings.CORPUS_DIR)
     reader = SimpleDirectoryReader(
-        input_dir=str(config.CORPUS_DIR),
+        input_dir=str(project_settings.CORPUS_DIR),
         recursive=True,
         required_exts=[".txt", ".md", ".json", ".yaml", ".yml", ".env", ".log"],
         filename_as_id=True,
@@ -181,8 +181,8 @@ def build_index(
 
     # 6. Chunking + embedding + indicizzazione (LlamaIndex fa tutto in una riga).
     splitter = SentenceSplitter(
-        chunk_size=config.CHUNK_SIZE,
-        chunk_overlap=config.CHUNK_OVERLAP,
+        chunk_size=project_settings.CHUNK_SIZE,
+        chunk_overlap=project_settings.CHUNK_OVERLAP,
     )
     log.info("Indicizzo i documenti (chunking + embedding)...")
     index = VectorStoreIndex.from_documents(
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     if "--poisoned" in sys.argv:
         build_index(
             reset=True,
-            collection_name=config.CHROMA_COLLECTION_POISONED,
+            collection_name=project_settings.CHROMA_COLLECTION_POISONED,
             include_poisoned=True,
         )
     else:

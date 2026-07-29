@@ -5,6 +5,7 @@ allo schema. Da eseguire prima di ogni ingest.
 Esegui con:
     python -m src.validate_corpus
 """
+
 import json
 import logging
 import sys
@@ -12,10 +13,12 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from src import config
+from src import project_settings
 from src.ingest.metadata import DocumentMetadata, KNOWN_ROLES
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 log = logging.getLogger("validate")
 
 # Estensioni dei documenti reali (i file .meta.json NON sono documenti).
@@ -46,7 +49,9 @@ def validate_one(doc: Path) -> tuple[bool, list[str]]:
     side = sidecar_path(doc)
 
     if not side.exists():
-        errors.append(f"file .meta.json mancante: atteso {side.relative_to(config.CORPUS_DIR)}")
+        errors.append(
+            f"file .meta.json mancante: atteso {side.relative_to(project_settings.CORPUS_DIR)}"
+        )
         return False, errors
 
     try:
@@ -63,14 +68,15 @@ def validate_one(doc: Path) -> tuple[bool, list[str]]:
             errors.append(f"campo `{loc}`: {err['msg']}")
         return False, errors
 
-    
-    expected_source = str(doc.relative_to(config.CORPUS_DIR)).replace("\\", "/")
+    expected_source = str(doc.relative_to(project_settings.CORPUS_DIR)).replace(
+        "\\", "/"
+    )
     if meta.source != expected_source:
         errors.append(
             f"campo `source`: {meta.source!r} non coincide col path reale {expected_source!r}"
         )
 
-    expected_category = doc.relative_to(config.CORPUS_DIR).parts[0]
+    expected_category = doc.relative_to(project_settings.CORPUS_DIR).parts[0]
     if meta.category != expected_category:
         errors.append(
             f"campo `category`: {meta.category!r} != sottocartella {expected_category!r}"
@@ -84,13 +90,13 @@ def validate_one(doc: Path) -> tuple[bool, list[str]]:
 
 
 def main() -> int:
-    docs = find_documents(config.CORPUS_DIR)
+    docs = find_documents(project_settings.CORPUS_DIR)
     log.info("Trovati %d documenti nel corpus.", len(docs))
 
     failures: list[tuple[Path, list[str]]] = []
     for doc in docs:
         ok, errors = validate_one(doc)
-        rel = doc.relative_to(config.CORPUS_DIR)
+        rel = doc.relative_to(project_settings.CORPUS_DIR)
         if ok:
             log.info("OK   %s", rel)
         else:
@@ -100,14 +106,22 @@ def main() -> int:
             failures.append((doc, errors))
 
     # File .meta.json orfani (senza documento corrispondente)
-    all_sidecars = list(config.CORPUS_DIR.rglob("*.meta.json"))
-    orphans = [s for s in all_sidecars if not Path(str(s)[: -len(".meta.json")]).exists()]
+    all_sidecars = list(project_settings.CORPUS_DIR.rglob("*.meta.json"))
+    orphans = [
+        s for s in all_sidecars if not Path(str(s)[: -len(".meta.json")]).exists()
+    ]
     for o in orphans:
-        log.error("FILE .META.JSON ORFANO: %s (manca il documento)", o.relative_to(config.CORPUS_DIR))
+        log.error(
+            "FILE .META.JSON ORFANO: %s (manca il documento)",
+            o.relative_to(project_settings.CORPUS_DIR),
+        )
 
     if failures or orphans:
-        log.error("Validazione FALLITA: %d documenti invalidi, %d file .meta.json orfani.",
-                  len(failures), len(orphans))
+        log.error(
+            "Validazione FALLITA: %d documenti invalidi, %d file .meta.json orfani.",
+            len(failures),
+            len(orphans),
+        )
         return 1
     log.info("Validazione PASSATA per %d documenti.", len(docs))
     return 0

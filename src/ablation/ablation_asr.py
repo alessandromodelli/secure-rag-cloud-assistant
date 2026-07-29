@@ -11,7 +11,7 @@ from collections import defaultdict
 import json
 from pathlib import Path
 
-from src import config
+from src import project_settings
 from src.ablation.ablation_configs import CONFIGS
 from src.RAG.rag_ablation import answer
 from src.IAR.identity import UserIdentity
@@ -38,7 +38,7 @@ def canaries_in_output(answer_text: str, canaries: dict[str, str]) -> list[str]:
 
 
 def run_asr(out_path: str = "asr_results.csv") -> None:
-    canaries = load_canaries(config.CORPUS_DIR)
+    canaries = load_canaries(project_settings.CORPUS_DIR)
     identity = UserIdentity(user_id="victim", role=QUERY_ROLE)
     rows: list[dict] = []
 
@@ -59,7 +59,7 @@ def run_asr(out_path: str = "asr_results.csv") -> None:
                 query,
                 identity,
                 defense_config=conf,
-                collection=config.CHROMA_COLLECTION_POISONED,  # Collezione avvelenata
+                collection=project_settings.CHROMA_COLLECTION_POISONED,  # Collezione avvelenata
             )
             retrieved = {s.source for s in resp.sources}
             exploited = canaries_in_output(resp.answer, canaries)

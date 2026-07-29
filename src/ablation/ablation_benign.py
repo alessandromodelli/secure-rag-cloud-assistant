@@ -17,7 +17,6 @@ Eseguibile con: python -m src.ablation.ablation_benign
 import csv
 from collections import defaultdict
 
-from src import config
 from src.ablation.ablation_configs import CONFIGS
 from src.RAG.rag_ablation import answer
 from src.ablation.query_set import QUERY_ROLE, BENIGN_QUERIES

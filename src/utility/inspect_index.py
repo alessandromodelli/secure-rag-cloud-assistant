@@ -4,13 +4,14 @@ Verifica che la collection ChromaDB sia popolata e mostra un assaggio.
 Esegui con:
     python -m src.inspect_index
 """
+
 import chromadb
-from src import config
+from src import project_settings
 
 
 def main() -> None:
-    client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
-    coll = client.get_collection(config.CHROMA_COLLECTION)
+    client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
+    coll = client.get_collection(project_settings.CHROMA_COLLECTION)
 
     print(f"Collection: {coll.name}")
     print(f"Numero di chunk: {coll.count()}")
@@ -24,7 +25,9 @@ def main() -> None:
         print(f"--- Chunk #{i} (id={doc_id}) ---")
         print(f"  source           : {meta.get('source')}")
         print(f"  category/type    : {meta.get('category')} / {meta.get('doc_type')}")
-        print(f"  access_level     : {meta.get('access_level')} (rank={meta.get('access_rank')})")
+        print(
+            f"  access_level     : {meta.get('access_level')} (rank={meta.get('access_rank')})"
+        )
         print(f"  allowed_roles    : {meta.get('allowed_roles')}")
         print(f"  sensitivity      : {meta.get('sensitivity')}")
         print(f"  contains_secrets : {meta.get('contains_secrets')}")

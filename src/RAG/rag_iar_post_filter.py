@@ -13,7 +13,7 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 
 import chromadb
 
-from src import config
+from src import project_settings
 from src.IAR.identity import DEFAULT_USER, UserIdentity
 from src.IAR.retriever_pf import IdentityAwareRetrieverPostFiltering, RetrievalResult
 
@@ -30,17 +30,18 @@ def load_index() -> VectorStoreIndex:
         # Qui dovresti implementare la logica per caricare l'indice
 
         Settings.embed_model = HuggingFaceEmbedding(
-            model_name=config.EMBED_MODEL
+            model_name=project_settings.EMBED_MODEL
         )  # Carica embedding model
         Settings.llm = Ollama(
-            model=config.LLM_MODEL, request_timeout=config.LLM_REQUEST_TIMEOUT
+            model=project_settings.LLM_MODEL,
+            request_timeout=project_settings.LLM_REQUEST_TIMEOUT,
         )  # Carica llm
 
         chroma_client = chromadb.PersistentClient(
-            path=str(config.CHROMA_DIR)
+            path=str(project_settings.CHROMA_DIR)
         )  # Carica ChromaDB
         chroma_collection = chroma_client.get_collection(
-            config.CHROMA_COLLECTION
+            project_settings.CHROMA_COLLECTION
         )  # Carica la collection ChromaDB
         vector_store = ChromaVectorStore(
             chroma_collection=chroma_collection
@@ -61,7 +62,7 @@ def load_index() -> VectorStoreIndex:
 def answer(
     query: str,
     identity: UserIdentity = DEFAULT_USER,
-    top_k: int = config.SIMILARITY_TOP_K,
+    top_k: int = project_settings.SIMILARITY_TOP_K,
 ) -> dict:
     """Esegue una query RAG completa e restituisce riposta e contesto filtrato in base all'identità dell'utente."""
 
