@@ -8,7 +8,7 @@ Eseguibile con: python -m src.ablation.ablation_urr
 """
 
 import csv
-from src.IAR.identity import authorize_chunk, UserIdentity
+from src.iar.identity import authorize_chunk, UserIdentity
 from src.ablation.rag_ablation import answer
 from src.ablation.ablation_configs import CONFIGS
 from src.ablation.query_set import PRIVILEGE_QUERIES, QUERY_ROLE

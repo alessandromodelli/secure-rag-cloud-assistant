@@ -19,12 +19,9 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from pydantic import BaseModel, Field
 
 from src import project_settings
-from src.IAR.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL
-from src.RAG.rag_secure import answer as answer_secure, SecureQueryResponse
+from src.iar.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL
+from src.rag.rag_secure import answer as answer_secure, SecureQueryResponse
 
-# from src.RAG.rag_iar_post_filter import answer as answer_iar_post_filter
-# from src.RAG.rag_iar import answer as answer_iar
-# from src.RAG.rag import answer as default_answer
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"

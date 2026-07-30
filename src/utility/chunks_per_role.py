@@ -1,7 +1,7 @@
 import chromadb
 from llama_index.vector_stores.chroma.base import _to_chroma_filter
 from src import project_settings
-from src.IAR.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL, authorization_filter
+from src.iar.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL, authorization_filter
 
 client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
 coll = client.get_collection(project_settings.CHROMA_COLLECTION)

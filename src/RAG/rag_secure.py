@@ -6,18 +6,13 @@ import logging
 import sys
 from typing import Optional
 
-from llama_index.core import Settings, StorageContext, VectorStoreIndex
-from llama_index.core.response_synthesizers import get_response_synthesizer
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.ollama import Ollama
-from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import VectorStoreIndex, get_response_synthesizer
 
-import chromadb
 from pydantic import BaseModel
 
 from src import project_settings
-from src.IAR.identity import DEFAULT_USER, UserIdentity
-from src.IAR.retriever import IdentityAwareRetriever
+from src.iar.identity import DEFAULT_USER, UserIdentity
+from src.iar.retriever import IdentityAwareRetriever
 from src.ingest.load_index import load_index
 from src.output_filter.output_filter import DEFAULT_OUTPUT_FILTER
 from src.query_firewall.query_firewall import DEFAULT_QUERY_FIREWALL

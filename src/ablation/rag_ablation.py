@@ -16,18 +16,13 @@ import logging
 import sys
 from typing import Optional
 
-from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.core.response_synthesizers import get_response_synthesizer
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.ollama import Ollama
-from llama_index.vector_stores.chroma import ChromaVectorStore
 
-import chromadb
 from pydantic import BaseModel
 
 from src import project_settings
-from src.IAR.identity import DEFAULT_USER, UserIdentity
-from src.IAR.retriever import IdentityAwareRetriever
+from src.iar.identity import DEFAULT_USER, UserIdentity
+from src.iar.retriever import IdentityAwareRetriever
 
 from src.ablation.ablation_configs import CONFIGS, DefenceConfig
 

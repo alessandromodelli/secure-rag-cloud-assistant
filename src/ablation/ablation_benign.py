@@ -21,7 +21,7 @@ from src.ablation.ablation_configs import CONFIGS
 from src.ablation.rag_ablation import answer
 from src.ablation.query_set import QUERY_ROLE, BENIGN_QUERIES
 
-from src.IAR.identity import UserIdentity
+from src.iar.identity import UserIdentity
 
 
 def distinct_docs(sources) -> set[str]:

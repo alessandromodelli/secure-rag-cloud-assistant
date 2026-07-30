@@ -14,7 +14,7 @@ from pathlib import Path
 from src import project_settings
 from src.ablation.ablation_configs import CONFIGS
 from src.ablation.rag_ablation import answer
-from src.IAR.identity import UserIdentity
+from src.iar.identity import UserIdentity
 from src.ablation.query_set import POISON_QUERIES, QUERY_ROLE
 
 

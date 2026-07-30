@@ -15,16 +15,20 @@ from typing import Optional
 from llama_index.core import VectorStoreIndex
 from llama_index.core.schema import NodeWithScore
 
-from src.IAR.identity import UserIdentity, authorize_chunk, authorization_filter
+from src.iar.identity import UserIdentity, authorize_chunk, authorization_filter
+
 
 class AuthorizationError(RuntimeError):
-    """ Eccezione lanciata se il vector store restituisce un chunk che non è autorizzato.
-    
-    Scatta solo se il filtro non è stato applicato correttamente. Caso d'uso non previsto."""
+    """Eccezione lanciata se il vector store restituisce un chunk che non è autorizzato.
+
+    Scatta solo se il filtro non è stato applicato correttamente. Caso d'uso non previsto.
+    """
+
 
 @dataclass
 class RetrievalRecord:
-    """ Singolo record del retrieval, informazioni del chunk recuperato"""
+    """Singolo record del retrieval, informazioni del chunk recuperato"""
+
     source: str
     access_level: str
     allowed_roles: str
@@ -32,26 +36,28 @@ class RetrievalRecord:
     score: Optional[float]
     text_preview: str
 
+
 @dataclass
 class RetrievalResult:
-    """ Risultato del retrieval basato su identità"""
+    """Risultato del retrieval basato su identità"""
+
     identity: UserIdentity
-    chunks: list[NodeWithScore] # Tutti i top-k chunks recuperati dal db vettoriale
-    audit_log: list[RetrievalRecord] = field(default_factory=list) 
+    chunks: list[NodeWithScore]  # Tutti i top-k chunks recuperati dal db vettoriale
+    audit_log: list[RetrievalRecord] = field(default_factory=list)
 
     @property
     def retrieved_count(self) -> int:
-        """ Numero di chunk recuperati"""
+        """Numero di chunk recuperati"""
         return len(self.chunks)
-    
+
     @property
     def chunks_with_secrets(self) -> int:
-        """ Numero di chunk recuperati che contengono segreti"""
+        """Numero di chunk recuperati che contengono segreti"""
         return sum(1 for record in self.audit_log if record.contains_secrets)
-    
+
 
 class IdentityAwareRetriever:
-    """ Retriever ristretto al sottospazio dei chunk autorizzati per l'identità che effettua la richiesta"""
+    """Retriever ristretto al sottospazio dei chunk autorizzati per l'identità che effettua la richiesta"""
 
     def __init__(self, index: VectorStoreIndex, top_k: int):
         self._index = index
@@ -59,21 +65,21 @@ class IdentityAwareRetriever:
 
     def retrieve(self, query: str, identity: UserIdentity) -> RetrievalResult:
 
-        # Applicazione del filtro 
+        # Applicazione del filtro
         filters = authorization_filter(identity)
 
         # Retrieval sematico standard (top-k)
         retriever = self._index.as_retriever(
-            similarity_top_k=self._top_k, 
-            filters=filters
+            similarity_top_k=self._top_k, filters=filters
         )
-        
+
         chunks: list[NodeWithScore] = retriever.retrieve(query)
 
         # Verifica se il filtro è stato applicato correttamente
         violations = [
             (chunk.metadata or {}).get("source")
-            for chunk in chunks if not authorize_chunk(chunk.metadata or {}, identity).is_authorized
+            for chunk in chunks
+            if not authorize_chunk(chunk.metadata or {}, identity).is_authorized
         ]
 
         # Non dovrebbe mai essere lanciata
@@ -83,13 +89,15 @@ class IdentityAwareRetriever:
                 f"autorizzati per il ruolo '{identity.role}': {violations}. "
                 f"Il filtro pre-retrieval non è stato applicato correttamente."
             )
-        
+
         audit_log = [
             RetrievalRecord(
                 source=(chunk.metadata).get("source", "unknown"),
                 access_level=(chunk.metadata or {}).get("access_level", ""),
                 allowed_roles=(chunk.metadata or {}).get("allowed_roles", ""),
-                contains_secrets=bool((chunk.metadata or {}).get("contains_secrets", False)),
+                contains_secrets=bool(
+                    (chunk.metadata or {}).get("contains_secrets", False)
+                ),
                 score=float(chunk.score) if chunk.score is not None else None,
                 text_preview=chunk.text[:200],
             )
@@ -101,7 +109,3 @@ class IdentityAwareRetriever:
             chunks=chunks,
             audit_log=audit_log,
         )
-
-
-
-
