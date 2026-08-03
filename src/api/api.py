@@ -22,7 +22,6 @@ from src import project_settings
 from src.iar.identity import UserIdentity, ROLE_TO_ACCESS_LEVEL
 from src.rag.rag_secure import answer as answer_secure, SecureQueryResponse
 
-
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
@@ -118,8 +117,9 @@ def health() -> dict:
     return {"status": "ok"}
 
 
+# Punto di ingresso per l'utilizzo del sistema
 @app.post("/query", response_model=SecureQueryResponse)
-def secure_query_iar_endpoint(req: QueryRequest) -> SecureQueryResponse:
+def secure_query_endpoint(req: QueryRequest) -> SecureQueryResponse:
     """Esegue una query con IAR pre retrieval."""
 
     if "index" not in state:

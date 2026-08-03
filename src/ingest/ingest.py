@@ -49,7 +49,7 @@ def build_index(
     project_settings.CHROMA_DIR.mkdir(parents=True, exist_ok=True)
     chroma_client = chromadb.PersistentClient(path=str(project_settings.CHROMA_DIR))
 
-    # 1. Reset opzionale dello storage. Rimuove collection senza eliminare l'intera cartella
+    # Reset dello storage. Rimuove collection senza eliminare l'intera cartella
     if reset:
         try:
             chroma_client.delete_collection(collection_name)
@@ -57,20 +57,23 @@ def build_index(
         except Exception:
             pass  # non esisteva
 
-    # 2. Configurazione globale di LlamaIndex.
-    #    Set dell'embedding model e disattivazione LLM visto che non è necessario per l'indicizzazione.
+    # Configurazione globale di LlamaIndex.
+    # Set dell'embedding model e disattivazione LLM visto che non è necessario per l'indicizzazione.
     log.info("Carico il modello di embedding: %s", project_settings.EMBED_MODEL)
-    Settings.embed_model = HuggingFaceEmbedding(model_name=project_settings.EMBED_MODEL)
+    Settings.embed_model = HuggingFaceEmbedding(
+        model_name=project_settings.EMBED_MODEL,
+        query_instruction="Represent this sentence for searching relevant passages:",  # Riferito da huggingface
+    )
     Settings.llm = None
     Settings.chunk_size = project_settings.CHUNK_SIZE
     Settings.chunk_overlap = project_settings.CHUNK_OVERLAP
 
-    # 3. Setup ChromaDB.
+    # Setup ChromaDB.
     chroma_collection = chroma_client.get_or_create_collection(name=collection_name)
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     storage_context = StorageContext.from_defaults(vector_store=vector_store)
 
-    # 4. Lettura del corpus.
+    # Lettura del corpus.
     log.info("Leggo i documenti da %s", project_settings.CORPUS_DIR)
     reader = SimpleDirectoryReader(
         input_dir=str(project_settings.CORPUS_DIR),
@@ -81,7 +84,7 @@ def build_index(
     documents = reader.load_data()
     log.info("Caricati %d documenti", len(documents))
 
-    # 5. Caricamento dei metadati dai .meta.json
+    # Caricamento dei metadati dai .meta.json
     #    Saltando i sidecar stessi visto che non sono documenti da indicizzare.
     log.info("Carico i metadati dai .meta.json")
     valid_documents = []
@@ -179,7 +182,7 @@ def build_index(
     log.info("Documenti pronti per l'indicizzazione: %d", len(valid_documents))
     documents = valid_documents  # sovrascrittura lista dei documenti validi
 
-    # 6. Chunking + embedding + indicizzazione (LlamaIndex fa tutto in una riga).
+    # Chunking + embedding + indicizzazione.
     splitter = SentenceSplitter(
         chunk_size=project_settings.CHUNK_SIZE,
         chunk_overlap=project_settings.CHUNK_OVERLAP,

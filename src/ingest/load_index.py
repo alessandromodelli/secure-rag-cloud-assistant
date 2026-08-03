@@ -21,6 +21,7 @@ def load_index(
             # Configurazione globale di Settings
             Settings.embed_model = HuggingFaceEmbedding(
                 model_name=project_settings.EMBED_MODEL,
+                query_instruction="Represent this sentence for searching relevant passages:",  # Su consiglio di huggingface
             )  # Carica embedding model
 
             # Parametri LLM
