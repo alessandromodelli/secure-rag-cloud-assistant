@@ -1,0 +1,57 @@
+{
+  "policy_name": "DevTeamObservabilityReadOnly",
+  "policy_id": "POL-2024-0203",
+  "description": "Read-only observability access for the development team. Grants log inspection and metric queries scoped to the primary region and to workloads owned by application teams.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": "arn:aws:logs:eu-west-1:123456789012:log-group:/aws/application/*"
+    },
+    {
+      "Sid": "AllowReadCloudWatchMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "eu-west-1"
+        }
+      }
+    },
+    {
+      "Sid": "AllowListS3ApplicationBuckets",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::acme-app-*"
+    },
+    {
+      "Sid": "DenyAnyWriteEverywhere",
+      "Effect": "Deny",
+      "Action": [
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "logs:PutLogEvents",
+        "logs:DeleteLogGroup"
+      ],
+      "Resource": "*"
+    }
+  ],
+  "attached_to": ["dev-team-group"],
+  "notes": "Reviewed and approved by the security team on 2024-06-14. Scope aligns with the observability read-only baseline for application teams. Next review scheduled at the quarterly access review cadence."
+}

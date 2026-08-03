@@ -1,0 +1,11 @@
+{
+  "source": "configs/order_service_deployment.yaml",
+  "category": "configs",
+  "doc_type": "k8s_manifest",
+  "access_level": "internal",
+  "allowed_roles": ["admin", "developer"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "kubernetes_manifest_secretkeyref_no_literal_credentials",
+  "origin": "synthetic_handwritten"
+}

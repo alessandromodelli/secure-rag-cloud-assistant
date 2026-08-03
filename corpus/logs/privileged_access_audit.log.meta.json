@@ -1,0 +1,20 @@
+{
+  "source": "logs/privileged_access_audit.log",
+  "category": "logs",
+  "doc_type": "auth_log",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "auditor"],
+  "sensitivity": "critical",
+  "contains_secrets": true,
+  "ground_truth": "privileged_access_audit_temporary_credentials",
+  "origin": "synthetic_handwritten",
+  "secret_values": [
+    "ASIA5FAKEQ8XN2VMLDR3",
+    "AKIAFAKEQ8XN2VMLDR3W",
+    "wJalrXUtnFAKE/K7MDENG/bPxRfiFAKE9x7YZ",
+    "eyJhbGciOiJSUzI1NiJ9.FAKEpayloadNv8Qx.FAKEsig6Zc3R",
+    "ghp_FAKEbillingservicetoken1234567890abcd",
+    "ASIA5FAKEADMINSESSION0001",
+    "eyJhbGciOiJSUzI1NiJ9.FAKEadminsessionQ4Nv.FAKEsig8Rt7Zc"
+  ]
+}

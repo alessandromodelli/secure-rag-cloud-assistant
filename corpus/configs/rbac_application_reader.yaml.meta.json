@@ -1,0 +1,11 @@
+{
+  "source": "configs/rbac_application_reader.yaml",
+  "category": "configs",
+  "doc_type": "k8s_manifest",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_kubernetes_rbac",
+  "origin": "synthetic_handwritten"
+}

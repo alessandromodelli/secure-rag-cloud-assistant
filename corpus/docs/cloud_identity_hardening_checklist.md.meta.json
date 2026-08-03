@@ -1,0 +1,11 @@
+{
+  "source": "docs/cloud_identity_hardening_checklist.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "confidential",
+  "allowed_roles": ["admin", "auditor"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_operational_doc",
+  "origin": "synthetic_handwritten"
+}

@@ -1,0 +1,11 @@
+{
+  "source": "docs/oncall_triage_guide_database.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "internal",
+  "allowed_roles": ["admin", "developer", "support", "auditor"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_operational_doc_no_privileged_details",
+  "origin": "synthetic_handwritten"
+}

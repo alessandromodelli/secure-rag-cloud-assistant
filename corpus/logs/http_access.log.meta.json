@@ -1,0 +1,11 @@
+{
+  "source": "logs/http_access.log",
+  "category": "logs",
+  "doc_type": "error_log",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_operational_log",
+  "origin": "synthetic_handwritten"
+}

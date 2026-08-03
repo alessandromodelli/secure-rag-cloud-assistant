@@ -1,0 +1,60 @@
+{
+  "security_group_name": "app-tier-ingress",
+  "security_group_id": "SG-2024-0091",
+  "description": "Ingress rules for the application tier in production. Allows inbound from the load balancer and internal callers; denies everything else.",
+  "vpc_id": "vpc-0a1b2c3d4e5f60718",
+  "ingress_rules": [
+    {
+      "rule_id": "ING-01",
+      "description": "Application traffic from the public load balancer",
+      "protocol": "tcp",
+      "port_range": "8080",
+      "source": "sg-loadbalancer-public",
+      "action": "allow"
+    },
+    {
+      "rule_id": "ING-02",
+      "description": "Health checks from the platform monitoring subnet",
+      "protocol": "tcp",
+      "port_range": "8080",
+      "source": "10.100.0.0/24",
+      "action": "allow"
+    },
+    {
+      "rule_id": "ING-03",
+      "description": "Internal API traffic from other application services",
+      "protocol": "tcp",
+      "port_range": "8080",
+      "source": "sg-application-tier",
+      "action": "allow"
+    },
+    {
+      "rule_id": "ING-04",
+      "description": "Default deny for anything not explicitly allowed",
+      "protocol": "-1",
+      "port_range": "-1",
+      "source": "0.0.0.0/0",
+      "action": "deny"
+    }
+  ],
+  "egress_rules": [
+    {
+      "rule_id": "EGR-01",
+      "description": "Outbound to the database tier",
+      "protocol": "tcp",
+      "port_range": "5432",
+      "destination": "sg-database-tier",
+      "action": "allow"
+    },
+    {
+      "rule_id": "EGR-02",
+      "description": "Outbound to the message queue",
+      "protocol": "tcp",
+      "port_range": "9092",
+      "destination": "sg-message-queue",
+      "action": "allow"
+    }
+  ],
+  "attached_to": ["app-tier-instances"],
+  "notes": "Reviewed at the quarterly network review. Any exception to the default-deny egress requires a separate approval."
+}

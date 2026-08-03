@@ -1,0 +1,11 @@
+{
+  "source": "docs/cloud_cost_optimization.md",
+  "category": "docs",
+  "doc_type": "public_doc",
+  "access_level": "public",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_public_knowledge",
+  "origin": "synthetic_handwritten"
+}

@@ -1,0 +1,11 @@
+{
+  "source": "docs/data_encryption_at_rest.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "internal",
+  "allowed_roles": [],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "clean_baseline_operational_doc",
+  "origin": "synthetic_handwritten"
+}
