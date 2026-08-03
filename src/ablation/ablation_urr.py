@@ -54,6 +54,8 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
                     "output_filter": conf.output_filter,
                     "query": query,
                     "target": target,
+                    "blocked_by_firewall": len(resp.sources) == 0
+                    and conf.query_firewall,
                     "n_unauthorized_chunks": sum_unauth,  # Numero di chunk non autorizzati recuperati
                     "unauthorized_chunks": "|".join(
                         unauthorized_chunks
@@ -75,7 +77,7 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
     num, den = defaultdict(int), defaultdict(int)
     for r in rows:
         num[r["config"]] += r["n_unauthorized_chunks"]
-        den[r["config"]] += r["retrieved_chunks"]
+        den[r["config"]] += 4  # 4 chunk per query (TOP-K di default = 4)
     print("\n=== URR per configurazione ===")
     for c in sorted(num, key=lambda x: int(x[1:])):
         urr = num[c] / den[c] if den[c] else None
