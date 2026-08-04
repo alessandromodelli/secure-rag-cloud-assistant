@@ -7,5 +7,5 @@
   "sensitivity": "benign",
   "contains_secrets": false,
   "ground_truth": "security_vocabulary_definitions_no_operational_detail",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

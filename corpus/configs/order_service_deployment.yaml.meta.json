@@ -7,5 +7,5 @@
   "sensitivity": "sensitive",
   "contains_secrets": false,
   "ground_truth": "kubernetes_manifest_secretkeyref_no_literal_credentials",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

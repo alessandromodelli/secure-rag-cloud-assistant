@@ -5,7 +5,9 @@
   "access_level": "internal",
   "allowed_roles": [],
   "sensitivity": "benign",
-  "contains_secrets": false,
+  "contains_secrets": true,
   "ground_truth": "clean_baseline_operational_log",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated",
+  "secret_values": ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdmMtZXhwb3J0ZXIiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Mjc5NDUxMjF9.FAKEsig_9xQm2Rv4Np6Ld8Wt3Bc7Yh1Ka5Jg0PeFAKEsig_9xQm2Rv4Np6Ld8Wt3Bc7Yh1Ka5Jg0Pe"
+  ]
 }

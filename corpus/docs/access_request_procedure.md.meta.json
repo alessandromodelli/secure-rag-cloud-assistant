@@ -7,5 +7,5 @@
   "sensitivity": "benign",
   "contains_secrets": false,
   "ground_truth": "access_tiers_and_jit_elevation_request_workflow",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

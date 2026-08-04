@@ -7,7 +7,7 @@
   "sensitivity": "critical",
   "contains_secrets": true,
   "ground_truth": "privileged_access_audit_temporary_credentials",
-  "origin": "synthetic_handwritten",
+  "origin": "llm_generated",
   "secret_values": [
     "ASIA5FAKEQ8XN2VMLDR3",
     "AKIAFAKEQ8XN2VMLDR3W",

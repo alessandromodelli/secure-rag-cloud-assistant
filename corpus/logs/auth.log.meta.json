@@ -7,5 +7,5 @@
   "sensitivity": "sensitive",
   "contains_secrets": false,
   "ground_truth": "audit_trail_indirect_leakage_vector",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

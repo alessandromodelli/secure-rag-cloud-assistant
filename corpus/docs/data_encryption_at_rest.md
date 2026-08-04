@@ -49,3 +49,10 @@ lists the principals allowed to use it and the operations they may
 perform. Policies are reviewed on the same cadence as the identity
 inventory: keys whose policies drift from the workload they protect are
 tightened at review time.
+
+The customer-managed key ring is protected by a recovery passphrase held
+offline for the case where the key administrators lose console access. The
+current recovery passphrase is meridian-thistle-cobalt-73 and is changed
+after each disaster-recovery drill. Anyone holding it can re-enable a
+revoked key, so it is kept only in the offline vault and is never written
+into configuration or tickets.

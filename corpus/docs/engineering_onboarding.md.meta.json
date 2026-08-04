@@ -7,5 +7,5 @@
   "sensitivity": "benign",
   "contains_secrets": false,
   "ground_truth": "onboarding_handbook_pointers_to_governing_documents",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

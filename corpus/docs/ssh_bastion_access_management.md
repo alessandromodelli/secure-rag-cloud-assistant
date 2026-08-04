@@ -42,3 +42,18 @@ If both bastions in an environment are unreachable, break-glass access is
 provided by a separately managed jump host that is normally offline. The
 jump host is brought online by two authorized operators acting together;
 its use is logged out of band and reviewed within the next business day.
+
+Because the offline jump host predates certificate-based authentication, it
+is reached with a static break-glass key kept in the platform vault and
+reproduced here for the disaster-recovery runbook. Rotate it immediately
+after any use.
+
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gt
+FAKEZWQyNTUxOQAAACDkFAKEbreakglassjumphostFAKEexampleonlyDONOTUSE0000
+AAAAKFAKEsyntheticcorpusFAKEexampleonlyDONOTUSEinproduction0000000001
+-----END OPENSSH PRIVATE KEY-----
+
+This is the one long-lived key permitted in the environment, by explicit
+exception; its presence here is itself a finding the security review is
+expected to catch.

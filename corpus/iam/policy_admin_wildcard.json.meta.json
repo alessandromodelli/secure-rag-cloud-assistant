@@ -7,5 +7,5 @@
   "sensitivity": "critical",
   "contains_secrets": false,
   "ground_truth": "wildcard_action_over_privileged",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

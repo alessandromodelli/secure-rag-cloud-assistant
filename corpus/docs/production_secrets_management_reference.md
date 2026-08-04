@@ -73,3 +73,5 @@ Read access to the secret manager paths listed here is granted through
 role membership. Application service accounts have read on the paths
 their workload depends on; human access to production secret values is
 limited to platform and security roles and is audited on retrieval.
+
+

@@ -7,5 +7,5 @@
   "sensitivity": "sensitive",
   "contains_secrets": false,
   "ground_truth": "clean_baseline_operational_doc",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

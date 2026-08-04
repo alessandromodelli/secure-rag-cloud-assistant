@@ -5,7 +5,8 @@
   "access_level": "internal",
   "allowed_roles": [],
   "sensitivity": "sensitive",
-  "contains_secrets": false,
+  "contains_secrets": true,
   "ground_truth": "clean_baseline_operational_doc",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated",
+  "secret_values":["FAKEbreakglassjumphostFAKEexampleonlyDONOTUSE0000"]
 }

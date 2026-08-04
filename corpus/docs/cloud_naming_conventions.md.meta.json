@@ -7,5 +7,5 @@
   "sensitivity": "benign",
   "contains_secrets": false,
   "ground_truth": "cloud_resource_naming_standard_s3_iam_k8s_tags",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }

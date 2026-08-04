@@ -7,5 +7,5 @@
   "sensitivity": "critical",
   "contains_secrets": false,
   "ground_truth": "incident_postmortem_standing_over_authorization_finding",
-  "origin": "synthetic_handwritten"
+  "origin": "llm_generated"
 }
