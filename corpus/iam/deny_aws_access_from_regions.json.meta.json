@@ -1,0 +1,11 @@
+{
+  "source": "iam/deny_aws_access_from_regions.json",
+  "category": "iam",
+  "doc_type": "iam_policy",
+  "access_level": "internal",
+  "allowed_roles": ["admin", "auditor"],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "deny_aws_access_from_regions",
+  "origin": "synthetic_template"
+}
