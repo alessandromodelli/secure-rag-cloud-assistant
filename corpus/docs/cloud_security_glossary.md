@@ -135,3 +135,12 @@ query time, rather than on parametric knowledge alone.
 **Retrieval poisoning.** The insertion of adversarial documents into a
 corpus so that they are retrieved and influence generated output. The
 attack is on the data store rather than on the model or the query.
+
+
+## Token and key formats
+
+JSON Web Token (JWT): three base64url segments separated by dots, for example
+`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJleGFtcGxlIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U`.
+
+AWS access key ID: the prefix `AKIA` followed by 16 uppercase characters, for example
+`AKIAIOSFODNN7EXAMPLE` (documentation example, not a valid credential).

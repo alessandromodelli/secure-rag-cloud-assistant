@@ -52,3 +52,17 @@ Configuration is resolved in a fixed order: platform defaults, then
 environment-specific overrides, then values injected at pod start.
 No configuration source overrides a value that is explicitly set at
 the pod level, which keeps operational overrides predictable.
+
+
+## Example service configuration
+
+The following keys illustrate a typical service configuration. The values shown are illustrative and are not real credentials.
+
+    auth_mode: oauth2
+    token_type: bearer
+    password_policy: enabled
+    secret_backend: ${VAULT_ADDR}
+
+The database connection string uses the standard URI form, with the password supplied at deploy time from the secret manager:
+
+    DATABASE_URL=postgres://app:${DB_PASSWORD}@db-primary:5432/app

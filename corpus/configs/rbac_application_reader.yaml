@@ -30,3 +30,8 @@ roleRef:
   kind: Role
   name: application-reader
   apiGroup: rbac.authorization.k8s.io
+
+# Reference authentication settings (documentation only, not applied by this manifest):
+#   authentication: ldap
+#   credential_source: iam-role
+#   auth_provider: <configured>

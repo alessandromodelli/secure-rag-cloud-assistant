@@ -61,3 +61,13 @@ Every role, group, and long-lived key has an owning team recorded in a
 tag. The identity inventory is reviewed quarterly: roles no longer in use
 are retired, roles whose scope has drifted from their description are
 rewritten, and any finding raised during the review is tracked to closure.
+
+
+## Rotation and cache settings
+
+Recommended values for the identity subsystem (illustrative):
+
+    password_rotation: quarterly
+    auth_required: true
+
+For local development the cache may point at an ephemeral store, for example `redis://:${REDIS_PASSWORD}@cache:6379/0`.
