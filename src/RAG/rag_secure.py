@@ -200,54 +200,63 @@ def _blocked_response(
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) >= 2 and sys.argv[1] == "--input":
+        query = input("Insert your question:")
+        user_identity = UserIdentity(user_id="user_developer", role="developer")
+
+        res = answer(query=query, identity=user_identity, top_k=4)
+
+        # STAMPA I RISULTATI
+        print("\n" + "=" * 40)
+        print("=== RISULTATI ===")
+        print("=" * 40)
+
+        print(f"Query: {res.query}")
+        print(f"Answer: {res.answer}")
+        print(f"Stats: {res.stats}")
+        print(f"\nSources ({len(res.sources)}):")
+
+        for i, src in enumerate(res.sources, start=1):
+
+            is_dict = isinstance(src, dict)
+            source_name = (
+                src.get("source") if is_dict else getattr(src, "source", "N/A")
+            )
+            category = (
+                src.get("category") if is_dict else getattr(src, "category", "N/A")
+            )
+            score = src.get("score") if is_dict else getattr(src, "score", 0.0)
+            access_level = (
+                src.get("access_level")
+                if is_dict
+                else getattr(src, "access_level", "N/A")
+            )
+            roles = (
+                src.get("allowed_roles")
+                if is_dict
+                else getattr(src, "allowed_roles", "N/A")
+            )
+            secrets = (
+                src.get("contains_secrets")
+                if is_dict
+                else getattr(src, "contains_secrets", False)
+            )
+            preview = (
+                src.get("text_preview") if is_dict else getattr(src, "text_preview", "")
+            )
+
+            # Pulisce i ritorni a capo per non rompere l'impaginazione
+            clean_preview = preview.replace("\n", " ").strip()
+
+            print(f"  [{i}] File: {source_name}")
+            print(
+                f"      Category: {category} | Score: {score:.4f} | Secrets: {secrets}"
+            )
+            print(f"      Access: {access_level} | Roles: {roles}")
+            print(f"      Preview: {clean_preview[:120]}...")
+            print("      " + "-" * 40)
+
+        print("=" * 60)
+    else:
         print('Use: python -m src.RAG.rag_secure "your request"')
         sys.exit(1)
-
-    user_identity = UserIdentity(user_id="user_developer", role="developer")
-
-    res = answer(query=sys.argv[1], identity=user_identity, top_k=4)
-
-    # STAMPA I RISULTATI
-    print("\n" + "=" * 40)
-    print("=== RISULTATI ===")
-    print("=" * 40)
-
-    print(f"Query: {res.query}")
-    print(f"Answer: {res.answer}")
-    print(f"Stats: {res.stats}")
-    print(f"\nSources ({len(res.sources)}):")
-
-    for i, src in enumerate(res.sources, start=1):
-
-        is_dict = isinstance(src, dict)
-        source_name = src.get("source") if is_dict else getattr(src, "source", "N/A")
-        category = src.get("category") if is_dict else getattr(src, "category", "N/A")
-        score = src.get("score") if is_dict else getattr(src, "score", 0.0)
-        access_level = (
-            src.get("access_level") if is_dict else getattr(src, "access_level", "N/A")
-        )
-        roles = (
-            src.get("allowed_roles")
-            if is_dict
-            else getattr(src, "allowed_roles", "N/A")
-        )
-        secrets = (
-            src.get("contains_secrets")
-            if is_dict
-            else getattr(src, "contains_secrets", False)
-        )
-        preview = (
-            src.get("text_preview") if is_dict else getattr(src, "text_preview", "")
-        )
-
-        # Pulisce i ritorni a capo per non rompere l'impaginazione
-        clean_preview = preview.replace("\n", " ").strip()
-
-        print(f"  [{i}] File: {source_name}")
-        print(f"      Category: {category} | Score: {score:.4f} | Secrets: {secrets}")
-        print(f"      Access: {access_level} | Roles: {roles}")
-        print(f"      Preview: {clean_preview[:120]}...")
-        print("      " + "-" * 40)
-
-    print("=" * 60)

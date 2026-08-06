@@ -57,16 +57,17 @@ def answer(query: str, top_k: int = project_settings.SIMILARITY_TOP_K) -> dict:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print('Uso: python -m src.rag.rag "la tua domanda"')
+    if len(sys.argv) >= 2 and sys.argv[1] == "--input":
+        query = input("Insert your question:")
+        result = answer(query)
+        print("\n=== RISPOSTA ===")
+        print(result["answer"])
+        print("\n=== FONTI RECUPERATE ===")
+        for i, s in enumerate(result["sources"], start=1):
+            print(
+                f"[{i}] {s['source']}  (category={s['category']}, score={s['score']:.3f})"
+            )
+            print(f"    {s['text_preview']!r}")
+    else:
+        print("Uso: python -m src.rag.rag --input")
         sys.exit(1)
-
-    result = answer(sys.argv[1])
-    print("\n=== RISPOSTA ===")
-    print(result["answer"])
-    print("\n=== FONTI RECUPERATE ===")
-    for i, s in enumerate(result["sources"], start=1):
-        print(
-            f"[{i}] {s['source']}  (category={s['category']}, score={s['score']:.3f})"
-        )
-        print(f"    {s['text_preview']!r}")
