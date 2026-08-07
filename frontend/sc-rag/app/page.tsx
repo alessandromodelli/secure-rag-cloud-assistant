@@ -90,7 +90,7 @@ export default function Home() {
               <input list="roles" value={role} onChange={(event) => setRole(event.target.value)} className="w-32 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm font-medium text-slate-700 outline-none focus:border-[var(--brand)]" />
               <datalist id="roles"><option value="public" /></datalist>
             </label>
-            <button type="submit" disabled={!query.trim() || loading} className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-sm font-bold text-slate-900 shadow-md shadow-amber-300/40 transition duration-200 hover:-translate-y-0.5 hover:bg-[var(--brand-dark)] hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0">
+            <button type="submit" disabled={loading} className="rounded-xl bg-[var(--brand)] px-5 py-2.5 text-sm font-bold text-slate-900 shadow-md shadow-amber-300/40 transition duration-200 hover:-translate-y-0.5 hover:bg-[var(--brand-dark)] hover:shadow-lg disabled:cursor-not-allowed disabled:bg-slate-300 disabled:hover:translate-y-0">
               {loading ? "Searching…" : "Ask AI"}
             </button>
           </div>
