@@ -12,6 +12,8 @@ from typing import Optional
 
 import chromadb
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from llama_index.core import Settings, StorageContext, VectorStoreIndex
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.ollama import Ollama
@@ -74,6 +76,17 @@ app = FastAPI(
     description="Prototipo per studio sicurezza RAG (tesi)",
     version="0.1.0",
     lifespan=lifespan,
+)
+
+# Configurazione CORS per accettare le preflight OPTIONS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "*"
+    ],  # In produzione, metti l'URL esatto (es. "http://localhost:3000")
+    allow_credentials=True,
+    allow_methods=["*"],  # Autorizza tutti i metodi, incluso OPTIONS e POST
+    allow_headers=["*"],  # Autorizza Content-Type
 )
 
 

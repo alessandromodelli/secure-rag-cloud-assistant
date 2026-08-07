@@ -69,7 +69,7 @@ class DocumentMetadata(BaseModel):
 
     # Identità
     source: str = Field(..., description="Path relativo a corpus/")
-    category: str = Field(..., description="Sottocartella di corpus/ (iam/secrets/...)")
+    category: str = Field(..., description="Sottocartella di corpus/ (iam/env/...)")
     doc_type: DocType
 
     # Classificazione di sicurezza
