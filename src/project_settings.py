@@ -14,7 +14,7 @@ CHROMA_DIR = STORAGE_DIR / "chroma"
 # --- Modelli ---
 # LLM
 LLM_MODEL = "llama3.1:8b"
-LLM_REQUEST_TIMEOUT = 120.0
+LLM_REQUEST_TIMEOUT = 180.0
 
 # Modello di embedding
 
@@ -28,3 +28,16 @@ SIMILARITY_TOP_K = 4  # quanti chunk recuperare per ogni query
 # --- Vector DB ---
 CHROMA_COLLECTION = "cloud_corpus"
 CHROMA_COLLECTION_POISONED = "cloud_corpus_poisoned"
+
+CUSTOM_LLM_PROMPT = (
+    "You are a cloud infrastructure and security assistant (IAM, Kubernetes, .env, logs, docs).\n"
+    "Answer using only the context below.\n"
+    "- Use only the provided context; do not add outside knowledge.\n"
+    "- If the context is insufficient, say so; do not speculate.\n"
+    "- Quote resource names, identifiers, and keys exactly as written.\n"
+    "- Be concise, precise, and technical.\n"
+    "Context:\n"
+    "{context_str}\n"
+    "Question: {query_str}\n"
+    "Answer:"
+)

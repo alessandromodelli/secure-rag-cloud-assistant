@@ -8,7 +8,7 @@ Esegui con:
 import logging
 import sys
 
-from llama_index.core import get_response_synthesizer
+from llama_index.core import PromptTemplate, get_response_synthesizer
 
 from src import project_settings
 from src.ingest.load_index import load_index
@@ -31,7 +31,9 @@ def answer(query: str, top_k: int = project_settings.SIMILARITY_TOP_K) -> dict:
     chunks = retriever.retrieve(query)
 
     # I chunk recuperati vengono passati come contesto al LLM insieme alla query
-    synthesizer = get_response_synthesizer()
+    synthesizer = get_response_synthesizer(
+        text_qa_template=PromptTemplate(project_settings.CUSTOM_LLM_PROMPT)
+    )
     llm_answer = str(synthesizer.synthesize(query, nodes=chunks))
 
     # Estraiamo le fonti per trasparenza (utile in tesi: ogni risposta è

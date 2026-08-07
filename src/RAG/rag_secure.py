@@ -6,7 +6,7 @@ import logging
 import sys
 from typing import Optional
 
-from llama_index.core import VectorStoreIndex, get_response_synthesizer
+from llama_index.core import PromptTemplate, VectorStoreIndex, get_response_synthesizer
 
 from pydantic import BaseModel
 
@@ -126,7 +126,9 @@ def answer(
         )
 
     else:
-        synthesizer = get_response_synthesizer()
+        synthesizer = get_response_synthesizer(
+            text_qa_template=PromptTemplate(project_settings.CUSTOM_LLM_PROMPT)
+        )
         llm_answer = str(synthesizer.synthesize(query, nodes=chunks))
 
     # Risposta controllata dall'Output Filter
