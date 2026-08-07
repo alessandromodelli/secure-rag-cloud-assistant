@@ -5,17 +5,24 @@ Metrica relativa da misurare: URR
 
 Eseguibile con: python -m src.ablation.ablation_urr
 
+Caricamento risultati con: python -m src.ablation.ablation_urr --load-results
+
 """
 
 import csv
+from pathlib import Path
+import sys
 from src.iar.identity import authorize_chunk, UserIdentity
 from src.ablation.rag_ablation import answer
 from src.ablation.ablation_configs import CONFIGS
 from src.ablation.query_set import PRIVILEGE_QUERIES, QUERY_ROLE
+from collections import defaultdict
+
+OUT_PATH = "urr_results.csv"
 
 
-def run_urr(out_path: str = "urr_results.csv") -> None:
-    identity = UserIdentity(user_id="attacker", role=QUERY_ROLE)
+def run_urr(out_path: str = OUT_PATH) -> None:
+    identity = UserIdentity(user_id=f"user_{QUERY_ROLE}", role=QUERY_ROLE)
     rows: list[dict] = []
 
     for conf in CONFIGS.values():
@@ -72,7 +79,6 @@ def run_urr(out_path: str = "urr_results.csv") -> None:
         w.writerows(rows)
 
     # URR per config = somma numeratori / somma denominatori (livello documento).
-    from collections import defaultdict
 
     num, den = defaultdict(int), defaultdict(int)
     for r in rows:
@@ -128,5 +134,39 @@ def print_chunks(sources: dict, identity: UserIdentity):
         print("      " + "-" * 40)
 
 
+def load_urr_results(path: str | Path) -> list[dict[str, str]]:
+    """Carica le righe dal CSV dei risultati."""
+    with Path(path).open(newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def show_urr_by_configuration(path: str | Path, top_k: int = 4) -> None:
+    """Calcola e stampa l'URR per ogni configurazione dal CSV salvato."""
+    rows = load_urr_results(path)
+
+    if not rows:
+        print("\nNessun risultato disponibile.")
+        return
+
+    numeratore = defaultdict(int)
+    denominatore = defaultdict(int)
+
+    for row in rows:
+        config = row["config"]
+        numeratore[config] += int(row["n_unauthorized_chunks"])
+        denominatore[config] += top_k  # TOP-K = 4
+
+    print("\n=== URR per configurazione ===")
+    for config in sorted(numeratore):
+        urr = numeratore[config] / denominatore[config]
+        print(f"{config}: URR={urr:.3f}")
+
+
 if __name__ == "__main__":
-    run_urr()
+    if len(sys.argv) > 1:
+        if sys.argv[1] != "--load-results":
+            print("Use: python -m src.ablation.ablation_urr --load-results")
+        else:
+            show_urr_by_configuration(OUT_PATH)
+    else:
+        run_urr()

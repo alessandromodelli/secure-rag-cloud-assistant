@@ -16,6 +16,7 @@ import logging
 import sys
 from typing import Optional
 
+from llama_index.core import PromptTemplate
 from llama_index.core.response_synthesizers import get_response_synthesizer
 
 from pydantic import BaseModel
@@ -107,7 +108,9 @@ def answer(
 
     else:
         if not only_urr:
-            synthesizer = get_response_synthesizer()
+            synthesizer = get_response_synthesizer(
+                text_qa_template=PromptTemplate(project_settings.CUSTOM_LLM_PROMPT)
+            )
             llm_answer = str(synthesizer.synthesize(query, nodes=chunks))
         else:
             llm_answer = "Answer not generated for URR measurements"
