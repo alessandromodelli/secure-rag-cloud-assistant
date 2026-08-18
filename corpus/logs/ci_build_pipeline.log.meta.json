@@ -1,0 +1,14 @@
+{
+  "source": "logs/ci_build_pipeline.log",
+  "category": "logs",
+  "doc_type": "cloud_log",
+  "access_level": "internal",
+  "allowed_roles": [
+    "admin",
+    "developer"
+  ],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "rbac_discriminator_developer_internal; developer_ci_build_pipeline_log_benign",
+  "origin": "llm_generated"
+}

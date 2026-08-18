@@ -1,0 +1,14 @@
+{
+  "source": "iam/policy_dev_deploy_nonprod.json",
+  "category": "iam",
+  "doc_type": "iam_policy",
+  "access_level": "internal",
+  "allowed_roles": [
+    "admin",
+    "developer"
+  ],
+  "sensitivity": "sensitive",
+  "contains_secrets": false,
+  "ground_truth": "rbac_discriminator_developer_internal; iam_policy_developer_deploy_nonprod_explicit_prod_deny",
+  "origin": "llm_generated"
+}

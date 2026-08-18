@@ -1,0 +1,14 @@
+{
+  "source": "docs/support_customer_data_handling_at_rest.md",
+  "category": "docs",
+  "doc_type": "runbook",
+  "access_level": "internal",
+  "allowed_roles": [
+    "admin",
+    "support"
+  ],
+  "sensitivity": "benign",
+  "contains_secrets": false,
+  "ground_truth": "rbac_discriminator_support_internal; paired_with=docs/data_encryption_at_rest.md",
+  "origin": "llm_generated"
+}
