@@ -18,7 +18,7 @@ from src.ablation.ablation_configs import CONFIGS
 from src.ablation.query_set import PRIVILEGE_QUERIES, QUERY_ROLE
 from collections import defaultdict
 
-OUT_PATH = "urr_results.csv"
+OUT_PATH = "results/urr_results.csv"
 
 
 def run_urr(out_path: str = OUT_PATH) -> None:

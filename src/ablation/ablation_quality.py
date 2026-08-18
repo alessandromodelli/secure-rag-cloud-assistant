@@ -25,7 +25,7 @@ from src.ablation.query_set import QUERY_ROLE, QUALITY_QUERIES
 
 from src.iar.identity import UserIdentity
 
-OUT_PATH = "quality_results.csv"
+OUT_PATH = "results/quality_results.csv"
 
 # Colonne fisse: servono per scrivere l'header PRIMA della prima riga (streaming).
 FIELDNAMES = [

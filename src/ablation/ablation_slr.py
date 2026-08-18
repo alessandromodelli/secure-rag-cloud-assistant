@@ -112,31 +112,58 @@ def run_slr(out_path: str = OUT_PATH, resume: bool = True) -> None:
     done = _completed_pairs(out_path) if resume else set()
     append = bool(done)  # prosegue in append se ci sono gia risultati
 
-    with open(out_path, "a" if append else "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-        if not append:
-            writer.writeheader()
-            f.flush()
+    t_start = time.perf_counter()
+    completed = 0  # query effettivamente eseguite in questo run (esclusi skip e errori)
+    try:
+        with open(out_path, "a" if append else "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+            if not append:
+                writer.writeheader()
+                f.flush()
 
-        for conf in CONFIGS.values():
-            print(
-                f"---- {conf.label} (QF:{conf.query_firewall} IAR:{conf.iar} OF:{conf.output_filter}) ----"
-            )
-            for q in SECRET_QUERIES:
-                if (conf.label, q.query) in done:
-                    print(f"  [skip, già salvata] {q.query}")
-                    continue
+            for conf in CONFIGS.values():
+                print(
+                    f"---- {conf.label} (QF:{conf.query_firewall} IAR:{conf.iar} OF:{conf.output_filter}) ----"
+                )
+                for q in SECRET_QUERIES:
+                    if (conf.label, q.query) in done:
+                        print(f"  [skip, già salvata] {q.query}")
+                        continue
 
-                query, target = q.query, q.target
-                print(f"--- Executing query: {query} ---")
+                    query, target = q.query, q.target
+                    print(f"--- Executing query: {query} ---")
 
-                try:
-                    resp = _answer_with_retry(query, identity, conf)
-                except Exception as exc:
-                    # Salva una riga di errore
-                    print(
-                        f"  !! ERRORE su '{query}': {exc.__class__.__name__}: {exc} — riga salvata come errore, continuo."
-                    )
+                    try:
+                        resp = _answer_with_retry(query, identity, conf)
+                    except Exception as exc:
+                        # Salva una riga di errore
+                        print(
+                            f"  !! ERRORE su '{query}': {exc.__class__.__name__}: {exc} — riga salvata come errore, continuo."
+                        )
+                        writer.writerow(
+                            {
+                                "config": conf.label,
+                                "iar": conf.iar,
+                                "query_firewall": conf.query_firewall,
+                                "output_filter": conf.output_filter,
+                                "query": query,
+                                "target": target,
+                                "answer": "",
+                                "secret_leaked": False,
+                                "n_secrets_leaked": 0,
+                                "leaked_values": "",
+                                "blocked_by_firewall": False,
+                                "secret_in_context": False,
+                                "sources_in_context": "",
+                                "any_secret_doc_in_context": False,
+                                "error": f"{exc.__class__.__name__}: {exc}",
+                            }
+                        )
+                        f.flush()  # salva in modo incrementale
+                        continue
+
+                    retrieved = {s.source for s in resp.sources}
+                    leaked = secret_in_output(resp.answer, corpus_secrets)
                     writer.writerow(
                         {
                             "config": conf.label,
@@ -145,52 +172,37 @@ def run_slr(out_path: str = OUT_PATH, resume: bool = True) -> None:
                             "output_filter": conf.output_filter,
                             "query": query,
                             "target": target,
-                            "answer": "",
-                            "secret_leaked": False,
-                            "n_secrets_leaked": 0,
-                            "leaked_values": "",
-                            "blocked_by_firewall": False,
-                            "secret_in_context": False,
-                            "sources_in_context": "",
-                            "any_secret_doc_in_context": False,
-                            "error": f"{exc.__class__.__name__}: {exc}",
+                            "answer": _flatten(resp.answer),
+                            "secret_leaked": bool(leaked),
+                            "n_secrets_leaked": len(leaked),
+                            "leaked_values": "|".join(leaked),
+                            "blocked_by_firewall": len(resp.sources) == 0
+                            and conf.query_firewall,
+                            "secret_in_context": target in retrieved,
+                            "sources_in_context": "|".join(sorted(retrieved)),
+                            "any_secret_doc_in_context": any(
+                                s.contains_secrets for s in resp.sources
+                            ),
+                            "error": "",
                         }
                     )
-                    f.flush()  # salva in modo incrementale
-                    continue
+                    f.flush()  # salvataggio incrementale
+                    completed += 1
 
-                retrieved = {s.source for s in resp.sources}
-                leaked = secret_in_output(resp.answer, corpus_secrets)
-                writer.writerow(
-                    {
-                        "config": conf.label,
-                        "iar": conf.iar,
-                        "query_firewall": conf.query_firewall,
-                        "output_filter": conf.output_filter,
-                        "query": query,
-                        "target": target,
-                        "answer": _flatten(resp.answer),
-                        "secret_leaked": bool(leaked),
-                        "n_secrets_leaked": len(leaked),
-                        "leaked_values": "|".join(leaked),
-                        "blocked_by_firewall": len(resp.sources) == 0
-                        and conf.query_firewall,
-                        "secret_in_context": target in retrieved,
-                        "sources_in_context": "|".join(sorted(retrieved)),
-                        "any_secret_doc_in_context": any(
-                            s.contains_secrets for s in resp.sources
-                        ),
-                        "error": "",
-                    }
-                )
-                f.flush()  # salvataggio incrementale
-
-                print(f"Query: {resp.query}")
-                print(f"Answer: {resp.answer}")
-                print_chunks(resp.sources)
-                print(f"Secret leaked: {bool(leaked)}")
-                print(f"Secret values: {'|'.join(leaked)}")
-                print(f"Secret in context: {target in retrieved}")
+                    print(f"Query: {resp.query}")
+                    print(f"Answer: {resp.answer}")
+                    print_chunks(resp.sources)
+                    print(f"Secret leaked: {bool(leaked)}")
+                    print(f"Secret values: {'|'.join(leaked)}")
+                    print(f"Secret in context: {target in retrieved}")
+    finally:
+        elapsed = time.perf_counter() - t_start
+        m, s = divmod(int(elapsed), 60)
+        h, m = divmod(m, 60)
+        avg = f" | mean {elapsed / completed:.1f}s/query" if completed else ""
+        print(
+            f"\nExecution time: {h:02d}:{m:02d}:{s:02d} ({elapsed:.1f}s) — {completed} queries executed {avg}"
+        )
 
     # Aggregazione finale
     show_slr_by_configuration(out_path)
